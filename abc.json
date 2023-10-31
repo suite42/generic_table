@@ -1,0 +1,98 @@
+[
+  {
+    "action_name": "Approve",
+    "image_url": "https://s3.ap-south-1.amazonaws.com/suite42-erp-prod/file_attachments/2023/09/28/File/PWCPYNSQ_approve.png",
+    "action_type": "PopUp",
+    "action_api": "https://erpnext.sandbox.suite42.in/api/method/suite42_erp_app.suite42_erp_app.common.payments.settlement_api.approve_settlement_request",
+    "action_api_request_type": "POST",
+    "action_enable": false,
+    "action_api_fields": [
+      {
+        "field_name_in_table": "id",
+        "field_name_in_action_api": "settlementRequestId",
+        "editable": false,
+        "data_type": "Number",
+        "mandatory": true,
+        "param_type": "json"
+      },
+      {
+        "field_name_in_table": "description",
+        "field_name_in_action_api": "description",
+        "editable": true,
+        "data_type": "Text",
+        "mandatory": false,
+        "param_type": "json"
+      }
+    ]
+  },
+  {
+    "action_name": "Reject",
+    "image_url": "https://s3.ap-south-1.amazonaws.com/suite42-erp-prod/file_attachments/2023/09/28/File/TL6PZ28N_cancel.png",
+    "action_type": "PopUp",
+    "action_api": "https://erpnext.sandbox.suite42.in/api/method/suite42_erp_app.suite42_erp_app.common.payments.settlement_api.reject_settlement_request",
+    "action_api_request_type": "POST",
+    "action_enable": false,
+    "action_api_fields": [
+      {
+        "field_name_in_table": "id",
+        "field_name_in_action_api": "settlementRequestId",
+        "editable": false,
+        "data_type": "Number",
+        "mandatory": true,
+        "param_type": "json"
+      },
+      {
+        "field_name_in_table": "description",
+        "field_name_in_action_api": "description",
+        "editable": true,
+        "data_type": "Text",
+        "mandatory": false,
+        "param_type": "json"
+      }
+    ]
+  },
+  {
+    "action_name": "Cancel",
+    "image_url": "https://s3.ap-south-1.amazonaws.com/suite42-erp-prod/file_attachments/2023/09/28/File/TL6PZ28N_cancel.png",
+    "action_type": "PopUp",
+    "action_api": "https://erpnext.sandbox.suite42.in/api/method/suite42_erp_app.suite42_erp_app.common.payments.settlement_api.cancel_settlement_request",
+    "action_api_request_type": "POST",
+    "action_enable": false,
+    "action_api_fields": [
+      {
+        "field_name_in_table": "id",
+        "field_name_in_action_api": "settlementRequestId",
+        "editable": false,
+        "data_type": "Number",
+        "mandatory": true,
+        "param_type": "json"
+      },
+      {
+        "field_name_in_table": "description",
+        "field_name_in_action_api": "description",
+        "editable": true,
+        "data_type": "Text",
+        "mandatory": false,
+        "param_type": "json"
+      }
+    ]
+  },
+  {
+    "action_name": "Redirect",
+    "image_url": "https://suite42-erp-prod.s3.ap-south-1.amazonaws.com/file_attachments/2023/09/28/File/ZWTNLYTW_newTab.png",
+    "action_type": "RedirectWithNewTab",
+    "action_api": "https://core.sandbox.suite42.in/finance-web/outbound-payments/",
+    "action_api_request_type": "GET",
+    "action_enable": false,
+    "action_api_fields": [
+      {
+        "field_name_in_table": "id",
+        "field_name_in_action_api": "settlementRequestId",
+        "editable": false,
+        "data_type": "Number",
+        "mandatory": true,
+        "param_type": "json"
+      }
+    ]
+  }
+]
