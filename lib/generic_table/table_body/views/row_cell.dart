@@ -98,6 +98,7 @@ class _RowCellState extends State<RowCell> {
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 0)),
           onTap: () async {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening DateTimepicker")));
                 final abc = await showOmniDateTimePicker(context: context);
                 for (var element in widget.message.update!.identifiers) {
                   if(element.mandatory == true) {
@@ -148,6 +149,7 @@ class _RowCellState extends State<RowCell> {
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 0)),
           onTap: () async {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening Datepicker")));
                 final abc = await showOmniDateTimePicker(context: context,type: OmniDateTimePickerType.date);
                 for (var element in widget.message.update!.identifiers) {
                   if(element.mandatory == true) {
@@ -226,6 +228,7 @@ class _RowCellState extends State<RowCell> {
           fieldViewBuilder: (context, textEditingController, focus, onSubmit) => TextFormField(
             cursorHeight: 16,
             onTap: (){
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Starting editing")));
               textEditingController.clear();
             },
             controller: textEditingController,
