@@ -1044,6 +1044,9 @@ class _TableViewState extends State<TableView> {
                       enabled: widget.tableName == null,
                       controller: textEditingController,
                       focusNode: focus,
+                      onTap: (){
+                        textEditingController.clear();
+                      },
                       onFieldSubmitted: (val) => onSubmit,
                       decoration: InputDecoration(
                         constraints: const BoxConstraints(maxHeight: 35),
@@ -1064,15 +1067,15 @@ class _TableViewState extends State<TableView> {
                       ),
                     ),
                     optionsBuilder: (val) {
-                      if (val.text.isEmpty) {
-                        return <String>[];
-                      } else {
-                        final List<String> list = [];
-                        if (state is TableLoadedState) {
-                          for (var name in state.table.message.tables) {
-                            list.add(name.tableName);
-                          }
+                      final List<String> list = [];
+                      if (state is TableLoadedState) {
+                        for (var name in state.table.message.tables) {
+                          list.add(name.tableName);
                         }
+                      }
+                      if (val.text.isEmpty) {
+                        return list;
+                      } else {
                         list.retainWhere((element) => element.toLowerCase().contains(val.text.toLowerCase()));
                         return list;
                       }
@@ -1100,7 +1103,9 @@ class _TableViewState extends State<TableView> {
                                     dense: true,
                                     tileColor: Colors.white,
                                     onTap: () {
-                                      func("");
+                                      selectedCell = null;
+                                      updateBody = {};
+                                      func(itr.elementAt(index));
                                       tableHeader.value = null;
                                       for(var x in state.table.message.tables) {
                                         if(x.tableName == itr.elementAt(index)){
@@ -1134,6 +1139,7 @@ class _TableViewState extends State<TableView> {
                                       if(tableHeader.value!.actions != null) {
                                         columnMeta.add(ColumnMeta(150, false,false));
                                       }
+                                      FocusManager.instance.primaryFocus!.unfocus();
                                     },
                                     title: Text(itr.elementAt(index))))
                                 : const Center(child: CircularProgressIndicator())),

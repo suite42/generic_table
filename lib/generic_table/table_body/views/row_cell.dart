@@ -225,6 +225,9 @@ class _RowCellState extends State<RowCell> {
             ? Autocomplete(
           fieldViewBuilder: (context, textEditingController, focus, onSubmit) => TextFormField(
             cursorHeight: 16,
+            onTap: (){
+              textEditingController.clear();
+            },
             controller: textEditingController,
             focusNode: focus,
             onFieldSubmitted: (val) => onSubmit,
@@ -242,18 +245,13 @@ class _RowCellState extends State<RowCell> {
             ),
           ),
           optionsBuilder: (val) async {
-            if (val.text.isEmpty) {
-              return <String>[];
-            } else {
-              List<String> list = [];
-              final res = await GlobalMethods.getRequest('${widget.tableHeader.data.columns[widget.subIndex].filterData.autoSuggestLink}[["name","like","%25${val.text}%25"]]');
-              print(res.body);
-              final dataList = jsonDecode(res.body)["data"];
-              for(var x in dataList) {
-                list.add(x["name"]);
-              }
-              return list;
+            List<String> list = [];
+            final res = await GlobalMethods.getRequest('${widget.tableHeader.data.columns[widget.subIndex].filterData.autoSuggestLink}[["name","like","%25${val.text}%25"]]');
+            final dataList = jsonDecode(res.body)["data"];
+            for(var x in dataList) {
+              list.add(x["name"]);
             }
+            return list;
           },
           optionsViewBuilder: (context, func, itr) => Align(
             alignment: Alignment.topLeft,
