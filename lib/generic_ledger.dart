@@ -1139,7 +1139,7 @@ class _TableViewState extends State<TableView> {
                                               (index) => TextEditingController());
                                       columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
                                       if(tableHeader.value!.actions != null) {
-                                        columnMeta.add(ColumnMeta(150, false,false));
+                                        columnMeta.add(ColumnMeta(250, false,false));
                                       }
                                       FocusManager.instance.primaryFocus!.unfocus();
                                     },
