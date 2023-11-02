@@ -394,7 +394,7 @@ class _TableViewState extends State<TableView> {
                     columnSize: columnMeta[x].width,
                     controller: controllersList[x],
                     tableHeader: tableHeader,
-                    onChanged: (val) {
+                    onChanged: (val) async {
                       tableHeader.value!.data.columns[x].filterData.defaultFilterType == "Like" ||
                           tableHeader.value!.data.columns[x].filterData.defaultFilterType ==
                               "Not Like"
@@ -417,6 +417,7 @@ class _TableViewState extends State<TableView> {
                       if (val.contains("%") && val.length == 2 || val.isEmpty) {
                         filters.value.remove(localList);
                       }
+                      await Future.delayed(Duration(milliseconds: 100));
                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                       mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
                           baseUrl: tableHeader.value!.actionApi,
@@ -1135,9 +1136,9 @@ class _TableViewState extends State<TableView> {
                                       }
                                       controllersList = List.generate(tableHeader.value!.data.columns.length,
                                               (index) => TextEditingController());
-                                      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
+                                      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(50, tableHeader.value!.data.columns[index].hidden,false));
                                       if(tableHeader.value!.actions != null) {
-                                        columnMeta.add(ColumnMeta(250, false,false));
+                                        columnMeta.add(ColumnMeta(50, false,false));
                                       }
                                       FocusManager.instance.primaryFocus!.unfocus();
                                     },
