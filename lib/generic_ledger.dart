@@ -158,7 +158,7 @@ class _TableViewState extends State<TableView> {
                       });
                     },icon: const Icon(Icons.invert_colors_on_sharp), label: Text("Color"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
                     SizedBox(width: 7,),
-                    OutlinedButton.icon(onPressed: (){},icon: const Icon(Icons.format_align_center), label: Text("Alignment"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
+                    // OutlinedButton.icon(onPressed: (){},icon: const Icon(Icons.format_align_center), label: Text("Alignment"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
                   ],
                 ),
               ),
@@ -692,8 +692,8 @@ class _TableViewState extends State<TableView> {
             position: PopupMenuPosition.under,
             surfaceTintColor: Colors.white,
             constraints: const BoxConstraints(
-              minWidth: 500,
-              maxWidth: 500,
+              minWidth: 650,
+              maxWidth: 650,
             ),
             tooltip: StringConstants.allFilters,
             color: Colors.white,
@@ -733,6 +733,8 @@ class _TableViewState extends State<TableView> {
                                   children: [
                                     Expanded(
                                       child: DropdownButtonFormField<int>(
+                                        isDense: true,
+                                        style: TextStyle(overflow: TextOverflow.ellipsis),
                                         value: filterCount[index],
                                         onChanged: tableHeader.value == null
                                             ? null
@@ -767,8 +769,11 @@ class _TableViewState extends State<TableView> {
                                     const SizedBox(
                                       width: 25,
                                     ),
-                                    Expanded(
+                                    SizedBox(
+                                      width: 150,
                                       child: DropdownButtonFormField(
+                                        isDense: true,
+                                        style: TextStyle(overflow: TextOverflow.ellipsis),
                                         value: validFilters[filterCount[index]].filterData.defaultFilterType,
                                         onChanged: (val) {
                                           // localList[1] = tableHeader.value!.data.columns[filterCount[index]].filterData.supportedFilters[filterCount[index]];
@@ -801,7 +806,8 @@ class _TableViewState extends State<TableView> {
                                     const SizedBox(
                                       width: 25,
                                     ),
-                                    Expanded(
+                                    SizedBox(
+                                      width: 175,
                                       child: TextFormField(
                                         controller: filterControllers[index],
                                         cursorHeight: 15,

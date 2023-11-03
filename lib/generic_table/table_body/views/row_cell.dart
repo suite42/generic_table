@@ -98,7 +98,6 @@ class _RowCellState extends State<RowCell> {
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 0)),
           onTap: () async {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening DateTimepicker")));
                 final abc = await showOmniDateTimePicker(context: context);
                 for (var element in widget.message.update!.identifiers) {
                   if(element.mandatory == true) {
@@ -113,7 +112,7 @@ class _RowCellState extends State<RowCell> {
                     _valueNotifier.value = "${abc.year}-${abc.month}-${abc.day} ${abc.hour}:${abc.minute}:${abc.second}";
                   }
                 }
-                print("body ${widget.body}");
+                // print("body ${widget.body}");
           },
         );
               }
@@ -122,7 +121,7 @@ class _RowCellState extends State<RowCell> {
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
           style: TextStyle(
               color: GlobalMethods.getColor(
-                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour!),
+                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
               fontWeight: FontWeight.bold),
         ),
       );
@@ -149,7 +148,6 @@ class _RowCellState extends State<RowCell> {
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 0)),
           onTap: () async {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening Datepicker")));
                 final abc = await showOmniDateTimePicker(context: context,type: OmniDateTimePickerType.date);
                 for (var element in widget.message.update!.identifiers) {
                   if(element.mandatory == true) {
@@ -174,7 +172,7 @@ class _RowCellState extends State<RowCell> {
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
           style: TextStyle(
               color: GlobalMethods.getColor(
-                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour!),
+                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
               fontWeight: FontWeight.bold),
         ),
       );
@@ -183,6 +181,7 @@ class _RowCellState extends State<RowCell> {
             ? DropdownButtonFormField<String>(
           items: widget.tableHeader.data.columns[widget.subIndex].writeOptions.options.supportedValues!.map((e) => DropdownMenuItem(value: e.toString(),child: Text(e.toString()),)).toList(),
           value: _valueNotifier.value,
+          isExpanded: true,
           onChanged: (val){
             for (var element in widget.message.update!.identifiers) {
               if(element.mandatory == true) {
@@ -217,7 +216,7 @@ class _RowCellState extends State<RowCell> {
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
           style: TextStyle(
               color: GlobalMethods.getColor(
-                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour!),
+                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
               fontWeight: FontWeight.bold),
         ),
       );
@@ -228,7 +227,6 @@ class _RowCellState extends State<RowCell> {
           fieldViewBuilder: (context, textEditingController, focus, onSubmit) => TextFormField(
             cursorHeight: 16,
             onTap: (){
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Starting editing")));
               textEditingController.clear();
             },
             controller: textEditingController,
@@ -303,7 +301,7 @@ class _RowCellState extends State<RowCell> {
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
           style: TextStyle(
               color: GlobalMethods.getColor(
-                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour!),
+                  widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
               fontWeight: FontWeight.bold),
         ),
       );
@@ -315,7 +313,7 @@ class _RowCellState extends State<RowCell> {
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
           style: TextStyle(
               color: GlobalMethods.getColor(
-                  widget.message.rows[widget.index].row[widget.subIndex].cellTextColour!),
+                  widget.message.rows[widget.index].row[widget.subIndex].cellTextColour),
               fontWeight: FontWeight.bold),
         ),
       );
@@ -327,6 +325,7 @@ class _RowCellState extends State<RowCell> {
         valueListenable: _valueNotifier,
         builder: (context, snapshot,w) {
         return TextFormField(
+          keyboardType: TextInputType.multiline,
           controller: TextEditingController(text: snapshot),
             onChanged: (val) {
               for (var element in widget.message.update!.identifiers) {
@@ -360,6 +359,7 @@ class _RowCellState extends State<RowCell> {
                 const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                 suffixIcon: InkWell(onTap: (){
                   showDialog(context: context, builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     content: TextFormField(
                       controller: TextEditingController(text: snapshot),
                       onChanged: (val){
@@ -389,9 +389,14 @@ class _RowCellState extends State<RowCell> {
                       ),
                       maxLines: 5,
                     ),
-                    contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 5),
+                    actionsPadding: EdgeInsets.fromLTRB(15, 0, 15, 15),
+                    contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 15),
                     actions: [
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white
+                        ),
                           onPressed: (){
                             Navigator.pop(context);
                       }, child: const Text("Done",style: TextStyle(fontWeight: FontWeight.bold))),
