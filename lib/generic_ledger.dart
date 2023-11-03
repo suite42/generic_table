@@ -403,18 +403,21 @@ class _TableViewState extends State<TableView> {
                       if (!usedControllers.contains(x)) {
                         usedControllers.add(x);
                       }
+                      // List<List<String>> localFilterList = [];
                       final localList = [
                         tableHeader.value!.data.columns[x].key,
                         tableHeader.value!.data.columns[x].filterData.defaultFilterType,
                         val
                       ];
-                      for (var element in filters.value) {
+                      var xa = List.from(filters.value);
+
+                      for (var element in xa) {
                         if (element.first == localList.first) {
                           filters.value.remove(element);
                         }
                       }
                       filters.value.add(localList);
-                      if (val.contains("%") && val.length == 2 || val.isEmpty) {
+                      if ((val == "%%")|| val.isEmpty) {
                         filters.value.remove(localList);
                       }
                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
