@@ -403,7 +403,6 @@ class _TableViewState extends State<TableView> {
                       if (!usedControllers.contains(x)) {
                         usedControllers.add(x);
                       }
-                      // List<List<String>> localFilterList = [];
                       final localList = [
                         tableHeader.value!.data.columns[x].key,
                         tableHeader.value!.data.columns[x].filterData.defaultFilterType,
