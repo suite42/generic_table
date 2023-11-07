@@ -18,7 +18,7 @@ class GlobalMethods {
     Uri uri = Uri.parse(url.trim());
 
     print("Get Url -$url");
-    print("auth token -${StringConstants.token}");
+    // print("auth token -${StringConstants.token}");
 
     try {
       final res = await http.get(uri,headers: headers);
@@ -38,8 +38,8 @@ class GlobalMethods {
     Uri uri = Uri.parse(url.trim());
 
     print("Post Url -$url");
-    print("Post Body -$body");
-    print(jsonEncode(body));
+    // print("Post Body -$body");
+    // print(jsonEncode(body));
 
     try {
       final res = await http.post(uri,headers: headers,body: jsonEncode(body));

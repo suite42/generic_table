@@ -5,8 +5,9 @@ extension Capitalize on String {
   }
 
   String removePercentage() {
-     String str = replaceFirst("%", "",0);
-     return str.replaceFirst("%", "",str.length-1);
+     String str = replaceFirst("%25", "",0);
+     str.replaceFirst("%25", "",str.length-3);
+     return str.replaceFirst("%25", "",str.length-3);
   }
 
 }

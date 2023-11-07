@@ -48,7 +48,7 @@ class _TableViewState extends State<TableView> {
 
   late List<ColumnMeta> columnMeta;
 
-  List<ScrollController?> scrollList = List.generate(32, (index) => null);
+  List<ScrollController?> scrollList = List.generate(100, (index) => null);
 
   final LinkedScrollControllerGroup _controllerGroup = LinkedScrollControllerGroup();
 
@@ -398,7 +398,7 @@ class _TableViewState extends State<TableView> {
                       tableHeader.value!.data.columns[x].filterData.defaultFilterType == "Like" ||
                           tableHeader.value!.data.columns[x].filterData.defaultFilterType ==
                               "Not Like"
-                          ? val = "%$val%"
+                          ? val = "%25$val%25"
                           : val;
                       if (!usedControllers.contains(x)) {
                         usedControllers.add(x);
@@ -416,7 +416,7 @@ class _TableViewState extends State<TableView> {
                         }
                       }
                       filters.value.add(localList);
-                      if ((val == "%%")|| val.isEmpty) {
+                      if ((val == "%25%25")|| val.isEmpty) {
                         filters.value.remove(localList);
                       }
                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
@@ -726,7 +726,13 @@ class _TableViewState extends State<TableView> {
                           key: formKey,
                           child: Column(
                             children: List.generate(filterCount.length, (index) {
+                              List<String> applicableFilter = [];
                               List<String> localList = ["", "", ""];
+                              for (var element in tableHeader.value!.data.columns) {
+                                if(element.key == localList.first) {
+                                  applicableFilter = element.writeOptions.options.supportedValues as List<String>;
+                                }
+                              }
                               return Container(
                                 margin: EdgeInsets.only(bottom: 20, top: index == 0 ? 15 : 0),
                                 child: Row(
@@ -776,7 +782,9 @@ class _TableViewState extends State<TableView> {
                                         style: TextStyle(overflow: TextOverflow.ellipsis),
                                         value: validFilters[filterCount[index]].filterData.defaultFilterType,
                                         onChanged: (val) {
-                                          // localList[1] = tableHeader.value!.data.columns[filterCount[index]].filterData.supportedFilters[filterCount[index]];
+                                          localList[1] = val!;
+                                          print(localList[1]);
+                                          setState((){});
                                         },
                                         onSaved: (val) {
                                           localList[1] = val!;
@@ -808,7 +816,34 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     SizedBox(
                                       width: 175,
-                                      child: TextFormField(
+                                      child: localList[1] == "Equals" ? DropdownButtonFormField(
+                                        isDense: true,
+                                        style: TextStyle(overflow: TextOverflow.ellipsis),
+                                        onChanged: (val) {
+                                          localList[1] = val!;
+                                        },
+                                        onSaved: (val) {
+                                          localList[1] = val!;
+                                        },
+                                        isExpanded: true,
+                                        items: applicableFilter
+                                            .map((e) => DropdownMenuItem(
+                                          value: e,
+                                          child: Text(e),
+                                        ))
+                                            .toList(),
+                                        decoration: InputDecoration(
+                                            constraints: const BoxConstraints(maxHeight: 30),
+                                            focusedBorder: OutlineInputBorder(
+                                                borderSide: const BorderSide(color: Colors.transparent),
+                                                borderRadius: BorderRadius.circular(6)),
+                                            enabledBorder: OutlineInputBorder(
+                                                borderSide: const BorderSide(color: Colors.transparent),
+                                                borderRadius: BorderRadius.circular(6)),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+                                            filled: true,
+                                            fillColor: Colors.grey.shade100),
+                                      ) : TextFormField(
                                         controller: filterControllers[index],
                                         cursorHeight: 15,
                                         decoration: InputDecoration(
