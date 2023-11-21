@@ -494,7 +494,7 @@ class _TableViewState extends State<TableView> {
                               const SizedBox(width: 5,),
                               Expanded(
                                   child: Tooltip(
-                                      message: "",
+                                      message: tableHeader.value!.data.columns[x].displayName.titleCase(),
                                       preferBelow: false,
                                       child: ValueListenableBuilder(
                                           valueListenable: sortByWithOrder,
@@ -566,7 +566,7 @@ class _TableViewState extends State<TableView> {
                                 const SizedBox(width: 5,),
                                 Expanded(
                                     child: Tooltip(
-                                        message: "",
+                                        message: tableHeader.value!.data.columns[x].displayName.titleCase(),
                                         preferBelow: false,
                                         child: ValueListenableBuilder(
                                             valueListenable: sortByWithOrder,
