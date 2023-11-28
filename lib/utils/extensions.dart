@@ -6,7 +6,6 @@ extension Capitalize on String {
 
   String removePercentage() {
      String str = replaceFirst("%25", "",0);
-     str.replaceFirst("%25", "",str.length-3);
      return str.replaceFirst("%25", "",str.length-3);
   }
 

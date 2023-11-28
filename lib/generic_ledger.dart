@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:generic_ledger/generic_table/generic_model/column_meta.dart';
 import 'package:generic_ledger/generic_table/table_body/models/table_row_data_model.dart';
+import 'package:generic_ledger/generic_table/widgets/custom_expansion_tile.dart';
 import 'package:generic_ledger/utils/extensions.dart';
 import 'package:generic_ledger/utils/string_constants.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
@@ -48,7 +49,7 @@ class _TableViewState extends State<TableView> {
 
   late List<ColumnMeta> columnMeta;
 
-  List<ScrollController?> scrollList = List.generate(100, (index) => null);
+  List<ScrollController?> scrollList = List.generate(102, (index) => null);
 
   final LinkedScrollControllerGroup _controllerGroup = LinkedScrollControllerGroup();
 
@@ -66,7 +67,7 @@ class _TableViewState extends State<TableView> {
     context.read<TableBloc>().add(FetchTableList());
   }
 
-  late List<TextEditingController> controllersList;
+  late Map<String, TextEditingController> controllersList;
 
   late List<TextEditingController> filterControllers = [];
 
@@ -76,7 +77,7 @@ class _TableViewState extends State<TableView> {
 
   ValueNotifier<List<List<String>>> filters = ValueNotifier([]);
 
-  List<TableColumn> validFilters = [];
+  Map<String, TableColumn> validFilters = {};
 
   ValueNotifier<String> sortByWithOrder = ValueNotifier("");
 
@@ -156,8 +157,8 @@ class _TableViewState extends State<TableView> {
                       setState(() {
 
                       });
-                    },icon: const Icon(Icons.invert_colors_on_sharp), label: Text("Color"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
-                    SizedBox(width: 7,),
+                    },icon: const Icon(Icons.invert_colors_on_sharp), label: const Text("Color"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
+                    const SizedBox(width: 7,),
                     // OutlinedButton.icon(onPressed: (){},icon: const Icon(Icons.format_align_center), label: Text("Alignment"),style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3))),),
                   ],
                 ),
@@ -184,8 +185,10 @@ class _TableViewState extends State<TableView> {
           )),
     );
   }
+  List<ExpansionMeta> exMeta = [];
 
   BlocConsumer<TableBodyBloc, TableRowStates> tableBody(BuildContext mainContext) {
+
 
     return BlocConsumer<TableBodyBloc, TableRowStates>(
         listener: (context, state) {},
@@ -205,169 +208,177 @@ class _TableViewState extends State<TableView> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 child: Column(
+                  // dividerColor: Colors.transparent,
                   children: List.generate(
                       (row.length / rowsPerPage).ceil() == activePage ? row.length - (rowsPerPage * (activePage - 1))
                           : rowsPerPage,
-                          (index) => InkWell(
+                          (index) =>  InkWell(
                         onDoubleTap: () {
-                          selectedCell = index;
-                          setState(() {});
+                            selectedCell = index;
+                            setState(() {});
                         },
                         child: ValueListenableBuilder(
-                          valueListenable: rowHeight,
-                          builder: (context, snapshot,wid) {
-                            return SizedBox(
-                              height: snapshot[index],
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Expanded(
-                                    child: CustomScrollView(
-                                      controller: scrollList[index + 2],
-                                      shrinkWrap: true,
-                                      primary: false,
-                                      scrollDirection: Axis.horizontal,
-                                      slivers: [
-                                        for(int x = 0; x < (tableHeader.value!.actions != null ? row[index].row.length + 1 : row[index].row.length); x++)
-                                          SliverPersistentHeader(
-                                            pinned: columnMeta[x].isFreezed,
-                                            delegate: Header(
-                                              extent: columnMeta[x].width,
-                                              child: tableHeader.value!.actions != null && x == row[index].row.length ? Container(
-                                                padding: const EdgeInsets.only(left: 10),
-                                                // width: columnMeta[index].width,
-                                                decoration: BoxDecoration(
-                                                    color:  const Color(0xFFF2F2F2),
-                                                    border: Border(bottom: BorderSide(color: Colors.grey.shade300))
-                                                ),
-                                                child: row[index].action!.isNotEmpty ? Center(
-                                                  child: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      scrollDirection: Axis.horizontal,
-                                                      itemCount: row[index].action!.length,
-                                                      itemBuilder : (context,localIndex) => IconButton(
-                                                        onPressed: (){
-                                                          String? desc = "";
-                                                          Map<String, dynamic>  valData = {};
-                                                          for(var x in row[index].row) {
-                                                            for(int y = 0; y < tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"].length; y++) {
-                                                              if(x.key == tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_table"]){
-                                                                valData[tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_action_api"]] = x.value;
-                                                              }
-                                                            }
-                                                          }
-                                                          showDialog(context: context,barrierDismissible: false, builder: (context) {
-                                                            final formKey = GlobalKey<FormState>();
-                                                            return BlocProvider.value(
-                                                              value: BlocProvider.of<PaymentBloc>(mainContext),
-                                                              child: BlocConsumer<PaymentBloc,PaymentsState>(
-                                                                  listener: (context, state) {
-                                                                    if(state is PaymentsLoadedState) {
-                                                                      mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                                                          baseUrl: tableHeader.value!.actionApi,
-                                                                          filters: filters.value,
-                                                                          sortBy: sortByWithOrder.value,
-                                                                          length: rowsPerPage));
-                                                                      Navigator.pop(context);
-                                                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
-                                                                    } else if (state is PaymentsErrorState) {
-                                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message),backgroundColor: Colors.red,));
-                                                                    }
-                                                                  },
-                                                                  builder: (context, state) {
-                                                                    final size = MediaQuery.of(context).size;
-                                                                    return AlertDialog(
-                                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                                                      title: Visibility(visible: state is! PaymentsLoadingState,child: Text(row[index].action![localIndex].action,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),)),
-                                                                      content: state is PaymentsLoadingState ? SizedBox(height: size.height / 3,child: const Center(child: CircularProgressIndicator())) : Form(
-                                                                          key: formKey,
-                                                                          child: SizedBox(
-                                                                            width: size.width / 3,
-                                                                            child: TextFormField(
-                                                                              initialValue: desc,
-                                                                              decoration: const InputDecoration(
-                                                                                hintText: "Enter description",
-                                                                                border: OutlineInputBorder(),
-                                                                                focusedBorder: OutlineInputBorder(),
-                                                                              ),
-                                                                              maxLines: 4,
-                                                                              onSaved: (val){
-                                                                                valData["description"] = val != null && val.isNotEmpty ? val : valData["description"];
-                                                                                context.read<PaymentBloc>().add(PaymentsActionEvent(
-                                                                                    tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api"],
-                                                                                    {
-                                                                                      "data" : valData
-                                                                                    }
-                                                                                ));
-                                                                              },
-                                                                              validator: row[index].action![localIndex].action == "Approve" ? null : (val) {
-                                                                                if(val == null || val.isEmpty) {
-                                                                                  return "Please enter some description";
-                                                                                } else if (val.length < 5) {
-                                                                                  "Please write more than one word";
-                                                                                } else {
-                                                                                  return null;
-                                                                                }
-                                                                              },
-                                                                            ),
-                                                                          )),
-                                                                      actions: state is PaymentsLoadingState ? [] : [
-                                                                        ElevatedButton(onPressed: (){
-                                                                          if(formKey.currentState!.validate()) {
-                                                                            formKey.currentState!.save();
-                                                                          }
-                                                                        }, child: const Text("Submit",style: TextStyle(fontWeight: FontWeight.bold))),
-                                                                        OutlinedButton(onPressed: (){
-                                                                          Navigator.pop(context);
-                                                                        }, child: const Text("Cancel")),
-                                                                      ],
-                                                                    );
+                            valueListenable: rowHeight,
+                            builder: (context, snapshot,wid) {
+                              return CustomExpansionTile(
+                                controlAffinity: ListTileControlAffinity.leading,
+                                tilePadding: EdgeInsets.zero,
+                                title: SizedBox(
+                                  height: snapshot[index],
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Expanded(
+                                        child: CustomScrollView(
+                                          controller: scrollList[index + 2],
+                                          shrinkWrap: true,
+                                          primary: false,
+                                          scrollDirection: Axis.horizontal,
+                                          slivers: [
+                                            for(int x = 0; x < (tableHeader.value!.actions != null ? row[index].row.length + 1 : row[index].row.length); x++)
+                                              SliverPersistentHeader(
+                                                pinned: columnMeta[x].isFreezed,
+                                                delegate: Header(
+                                                  extent: columnMeta[x].width,
+                                                  child: tableHeader.value!.actions != null && x == row[index].row.length ? Container(
+                                                    padding: const EdgeInsets.only(left: 10),
+                                                    // width: columnMeta[index].width,
+                                                    decoration: BoxDecoration(
+                                                        color:  const Color(0xFFF2F2F2),
+                                                        border: Border(bottom: BorderSide(color: Colors.grey.shade300))
+                                                    ),
+                                                    child: row[index].action!.isNotEmpty ? Center(
+                                                      child: ListView.builder(
+                                                          shrinkWrap: true,
+                                                          scrollDirection: Axis.horizontal,
+                                                          itemCount: row[index].action!.length,
+                                                          itemBuilder : (context,localIndex) => IconButton(
+                                                            onPressed: (){
+                                                              String? desc = "";
+                                                              Map<String, dynamic>  valData = {};
+                                                              for(var x in row[index].row) {
+                                                                for(int y = 0; y < tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"].length; y++) {
+                                                                  if(x.key == tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_table"]){
+                                                                    valData[tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_action_api"]] = x.value;
                                                                   }
-                                                              ),
-                                                            );
-                                                          });
-                                                        },
-                                                        icon: Image.network(tableHeader.value!.actions![row[index].action![localIndex].action]!["image_url"],width: 20,height: 20,),
-                                                        tooltip: row[index].action![localIndex].action,
-                                                      )
+                                                                }
+                                                              }
+                                                              showDialog(context: context,barrierDismissible: false, builder: (context) {
+                                                                final formKey = GlobalKey<FormState>();
+                                                                return BlocProvider.value(
+                                                                  value: BlocProvider.of<PaymentBloc>(mainContext),
+                                                                  child: BlocConsumer<PaymentBloc,PaymentsState>(
+                                                                      listener: (context, state) {
+                                                                        if(state is PaymentsLoadedState) {
+                                                                          mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
+                                                                              baseUrl: tableHeader.value!.actionApi,
+                                                                              filters: filters.value,
+                                                                              sortBy: sortByWithOrder.value,
+                                                                              length: rowsPerPage));
+                                                                          Navigator.pop(context);
+                                                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
+                                                                        } else if (state is PaymentsErrorState) {
+                                                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message),backgroundColor: Colors.red,));
+                                                                        }
+                                                                      },
+                                                                      builder: (context, state) {
+                                                                        final size = MediaQuery.of(context).size;
+                                                                        return AlertDialog(
+                                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                                          title: Visibility(visible: state is! PaymentsLoadingState,child: Text(row[index].action![localIndex].action,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),)),
+                                                                          content: state is PaymentsLoadingState ? SizedBox(height: size.height / 3,child: const Center(child: CircularProgressIndicator())) : Form(
+                                                                              key: formKey,
+                                                                              child: SizedBox(
+                                                                                width: size.width / 3,
+                                                                                child: TextFormField(
+                                                                                  initialValue: desc,
+                                                                                  decoration: const InputDecoration(
+                                                                                    hintText: "Enter description",
+                                                                                    border: OutlineInputBorder(),
+                                                                                    focusedBorder: OutlineInputBorder(),
+                                                                                  ),
+                                                                                  maxLines: 4,
+                                                                                  onSaved: (val){
+                                                                                    valData["description"] = val != null && val.isNotEmpty ? val : valData["description"];
+                                                                                    context.read<PaymentBloc>().add(PaymentsActionEvent(
+                                                                                        tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api"],
+                                                                                        {
+                                                                                          "data" : valData
+                                                                                        }
+                                                                                    ));
+                                                                                  },
+                                                                                  validator: row[index].action![localIndex].action == "Approve" ? null : (val) {
+                                                                                    if(val == null || val.isEmpty) {
+                                                                                      return "Please enter some description";
+                                                                                    } else if (val.length < 5) {
+                                                                                      "Please write more than one word";
+                                                                                    } else {
+                                                                                      return null;
+                                                                                    }
+                                                                                  },
+                                                                                ),
+                                                                              )),
+                                                                          actions: state is PaymentsLoadingState ? [] : [
+                                                                            ElevatedButton(onPressed: (){
+                                                                              if(formKey.currentState!.validate()) {
+                                                                                formKey.currentState!.save();
+                                                                              }
+                                                                            }, child: const Text("Submit",style: TextStyle(fontWeight: FontWeight.bold))),
+                                                                            OutlinedButton(onPressed: (){
+                                                                              Navigator.pop(context);
+                                                                            }, child: const Text("Cancel")),
+                                                                          ],
+                                                                        );
+                                                                      }
+                                                                  ),
+                                                                );
+                                                              });
+                                                            },
+                                                            icon: Image.network(tableHeader.value!.actions![row[index].action![localIndex].action]!["image_url"],width: 20,height: 20,),
+                                                            tooltip: row[index].action![localIndex].action,
+                                                          )
+                                                      ),
+                                                    ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
+                                                  ) : RowCell(
+                                                    tableHeader: tableHeader.value!,
+                                                    message: state.tableRowDataModel.message,
+                                                    activePage: activePage,
+                                                    body: updateBody,
+                                                    rowsPerPage: rowsPerPage,
+                                                    index: index,
+                                                    subIndex:x,
+                                                    selectedCell: selectedCell,
+                                                    cellSize: columnMeta[x].width,
+                                                    isSelected: colSelected != null && colSelected == x,
                                                   ),
-                                                ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
-                                              ) : RowCell(
-                                                tableHeader: tableHeader.value!,
-                                                message: state.tableRowDataModel.message,
-                                                activePage: activePage,
-                                                body: updateBody,
-                                                rowsPerPage: rowsPerPage,
-                                                index: index,
-                                                subIndex:x,
-                                                selectedCell: selectedCell,
-                                                cellSize: columnMeta[x].width,
-                                                isSelected: colSelected != null && colSelected == x,
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                                          ],
+                                        ),
+                                      ),
+                                      MouseRegion(
+                                          cursor: SystemMouseCursors.resizeUpDown,
+                                          child: GestureDetector(
+                                              onVerticalDragUpdate: (val) {
+                                                setState(() {
+                                                  final temp = 40 + val.localPosition.dy;
+                                                  rowHeight.value[index] = temp < 30 ? 30 : temp;
+                                                });
+                                              },
+                                              child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
+                                    ],
                                   ),
-                                  MouseRegion(
-                                      cursor: SystemMouseCursors.resizeUpDown,
-                                      child: GestureDetector(
-                                          onVerticalDragUpdate: (val) {
-                                            setState(() {
-                                              final temp = 40 + val.localPosition.dy;
-                                              rowHeight.value[index] = temp < 30 ? 30 : temp;
-                                            });
-                                          },
-                                          child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
-                                ],
-                              ),
-                            );
-                          }
+                                ),
+                              );
+                            }
                         ),
-                      )),
+                      ),
+                           ),
                 ),
               ),
             );
+          } else if(state is TableRowErrorState) {
+            return Center(child: Text(state.message,textAlign: TextAlign.center,style: TextStyle(color: Colors.red,fontSize: 18,fontWeight: FontWeight.bold),));
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -378,7 +389,7 @@ class _TableViewState extends State<TableView> {
     return Positioned(
         top: 50,
         height: 40,
-        left: 0,
+        left: 34,
         right: 0,
         child: CustomScrollView(
           controller: scrollList[1],
@@ -392,7 +403,7 @@ class _TableViewState extends State<TableView> {
                   extent: columnMeta[x].width,
                   child: FilterCell(
                     columnSize: columnMeta[x].width,
-                    controller: controllersList[x],
+                    controller: controllersList[tableHeader.value!.data.columns[x].key]!,
                     tableHeader: tableHeader,
                     onChanged: (val) {
                       tableHeader.value!.data.columns[x].filterData.defaultFilterType == "Like" ||
@@ -418,6 +429,7 @@ class _TableViewState extends State<TableView> {
                       filters.value.add(localList);
                       if ((val == "%25%25")|| val.isEmpty) {
                         filters.value.remove(localList);
+                        filterCount.remove(filterCount.length);
                       }
                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                       mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
@@ -441,7 +453,7 @@ class _TableViewState extends State<TableView> {
     }
     return Positioned(
       height: 55,
-      left: 0,
+      left: 34,
       right: 0,
       child: CustomScrollView(
         controller: scrollList[0],
@@ -645,15 +657,16 @@ class _TableViewState extends State<TableView> {
                       children: [
                         Text(list[index].length == 1
                             ? "Sort By : ${list[index][0]}"
-                            : "${list[index][0]} - ${list[index][2].removePercentage()}"),
+                            : "${list[index][0]} - ${list[index][1].toLowerCase() == "like" || list[index][1].toLowerCase() == "not like" ? list[index][2].removePercentage() : list[index][2]}"),
                         const SizedBox(width: 3),
                         InkWell(
                             onTap: () {
                               list[index].length == 1 ? sortByWithOrder.value = "" : filters.value.remove(list[index]);
                               if (usedControllers.isNotEmpty) {
-                                controllersList[usedControllers[index]].clear();
+                                // controllersList[usedControllers[index]].clear();
                                 usedControllers.removeAt(index);
                               }
+                              controllersList[list[index][0]]!.clear();
                               refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                               mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
                                   baseUrl: tableHeader.value!.actionApi,
@@ -725,36 +738,39 @@ class _TableViewState extends State<TableView> {
                         Form(
                           key: formKey,
                           child: Column(
-                            children: List.generate(filterCount.length, (index) {
-                              List<String> applicableFilter = [];
+                            children: List.generate(filters.value.length, (index) {
+                              Map<String, dynamic> applicableFilter = {};
                               List<String> localList = ["", "", ""];
                               for (var element in tableHeader.value!.data.columns) {
                                 if(element.key == localList.first) {
-                                  applicableFilter = element.writeOptions.options.supportedValues as List<String>;
+                                  applicableFilter[element.key] = element.writeOptions.options.supportedValues as List<String>;
                                 }
+                                print(applicableFilter);
                               }
+                              // print("object ${tableHeader.value!.data.columns[index].filterData.defaultFilterType}");
+                              // validFilters.forEach((element) {
+                              //   print(element.key);
+                              // });
                               return Container(
                                 margin: EdgeInsets.only(bottom: 20, top: index == 0 ? 15 : 0),
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: DropdownButtonFormField<int>(
+                                      child: DropdownButtonFormField<String>(
                                         isDense: true,
-                                        style: TextStyle(overflow: TextOverflow.ellipsis),
-                                        value: filterCount[index],
-                                        onChanged: tableHeader.value == null
-                                            ? null
-                                            : (val) {
-                                          filterCount[index] = val!;
+                                        style: const TextStyle(overflow: TextOverflow.ellipsis),
+                                        value: filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0],
+                                        onChanged: tableHeader.value == null ? null : (val) {
+                                          filters.value[index][0] = val!;
+                                          print(validFilters[filters.value[index][0]]);
+                                          print(filters.value);
                                           setState(() {});
                                         },
                                         onSaved: (val) {
-                                          localList[0] = validFilters[val!].key;
+                                          filters.value[index][0] = val!;
                                         },
                                         isExpanded: true,
-                                        items: validFilters.asMap().map((key, e) => MapEntry(key, DropdownMenuItem<int>(value: key, child: Text(e.displayName))))
-                                            .values
-                                            .toList(),
+                                        items: validFilters.keys.map((e) => DropdownMenuItem<String>(value: e, child: Text(validFilters[e]!.displayName))).toList(),
                                         decoration: InputDecoration(
                                             hintStyle: TextStyle(
                                                 fontSize: 14,
@@ -777,27 +793,20 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     SizedBox(
                                       width: 150,
-                                      child: DropdownButtonFormField(
+                                      child: DropdownButtonFormField<String>(
                                         isDense: true,
-                                        style: TextStyle(overflow: TextOverflow.ellipsis),
-                                        value: validFilters[filterCount[index]].filterData.defaultFilterType,
+                                        style: const TextStyle(overflow: TextOverflow.ellipsis),
+                                        value: filters.value[index][1].isEmpty ? validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!.filterData.defaultFilterType : filters.value[index][1],
                                         onChanged: (val) {
-                                          localList[1] = val!;
-                                          print(localList[1]);
+                                          filters.value[index][1] = val!;
+                                          print(filters.value[index][1]);
                                           setState((){});
                                         },
                                         onSaved: (val) {
-                                          localList[1] = val!;
+                                          filters.value[index][1] = val!;
                                         },
                                         isExpanded: true,
-                                        items: validFilters[filterCount[index]]
-                                            .filterData
-                                            .supportedFilters
-                                            .map((e) => DropdownMenuItem(
-                                          value: e,
-                                          child: Text(e),
-                                        ))
-                                            .toList(),
+                                        items: validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!.filterData.supportedFilters.map<DropdownMenuItem<String>>((e) => DropdownMenuItem<String>(value: e, child: Text(e))).toList(),
                                         decoration: InputDecoration(
                                             constraints: const BoxConstraints(maxHeight: 30),
                                             focusedBorder: OutlineInputBorder(
@@ -816,35 +825,39 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     SizedBox(
                                       width: 175,
-                                      child: localList[1] == "Equals" ? DropdownButtonFormField(
-                                        isDense: true,
-                                        style: TextStyle(overflow: TextOverflow.ellipsis),
-                                        onChanged: (val) {
-                                          localList[1] = val!;
-                                        },
-                                        onSaved: (val) {
-                                          localList[1] = val!;
-                                        },
-                                        isExpanded: true,
-                                        items: applicableFilter
-                                            .map((e) => DropdownMenuItem(
-                                          value: e,
-                                          child: Text(e),
-                                        ))
-                                            .toList(),
-                                        decoration: InputDecoration(
-                                            constraints: const BoxConstraints(maxHeight: 30),
-                                            focusedBorder: OutlineInputBorder(
-                                                borderSide: const BorderSide(color: Colors.transparent),
-                                                borderRadius: BorderRadius.circular(6)),
-                                            enabledBorder: OutlineInputBorder(
-                                                borderSide: const BorderSide(color: Colors.transparent),
-                                                borderRadius: BorderRadius.circular(6)),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-                                            filled: true,
-                                            fillColor: Colors.grey.shade100),
-                                      ) : TextFormField(
-                                        controller: filterControllers[index],
+                                      child:
+                                      // filters.value[index][1] == "Equals" ? DropdownButtonFormField(
+                                      //   isDense: true,
+                                      //   style: const TextStyle(overflow: TextOverflow.ellipsis),
+                                      //   onChanged: (val) {
+                                      //     localList[1] = val!;
+                                      //   },
+                                      //   onSaved: (val) {
+                                      //     localList[1] = val!;
+                                      //   },
+                                      //   isExpanded: true,
+                                      //   items: applicableFilter
+                                      //       .map((e) => DropdownMenuItem(
+                                      //     value: e,
+                                      //     child: Text(e),
+                                      //   ))
+                                      //       .toList(),
+                                      //   decoration: InputDecoration(
+                                      //       constraints: const BoxConstraints(maxHeight: 30),
+                                      //       focusedBorder: OutlineInputBorder(
+                                      //           borderSide: const BorderSide(color: Colors.transparent),
+                                      //           borderRadius: BorderRadius.circular(6)),
+                                      //       enabledBorder: OutlineInputBorder(
+                                      //           borderSide: const BorderSide(color: Colors.transparent),
+                                      //           borderRadius: BorderRadius.circular(6)),
+                                      //       contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+                                      //       filled: true,
+                                      //       fillColor: Colors.grey.shade100),
+                                      // ) :
+                                      TextFormField(
+                                        // controller: filterControllers[index],
+                                        initialValue: filters.value[index][2].isNotEmpty && (filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like")
+                                            ? filters.value[index][2].removePercentage() : filters.value[index][2],
                                         cursorHeight: 15,
                                         decoration: InputDecoration(
                                             hintText: StringConstants.searchValue,
@@ -862,18 +875,20 @@ class _TableViewState extends State<TableView> {
                                             contentPadding: const EdgeInsets.symmetric(horizontal: 15),
                                             filled: true,
                                             fillColor: Colors.grey.shade100),
+                                        validator: (val) => val!.isEmpty ? "Please enter value" : null,
                                         onSaved: (val) {
-                                          localList[1] == "Like" || localList[1] == "Not Like"
-                                              ? val = "%$val%"
+                                          controllersList[filters.value[index][0]]!.text = val!;
+                                          filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
+                                              ? val = "%25$val%25"
                                               : val;
-                                          localList[2] = val!;
-                                          for (var element in filters.value) {
-                                            if (element.first == localList.first) {
-                                              filters.value.remove(element);
-                                            }
-                                          }
+                                          filters.value[index][2] = val;
+                                          // for (var element in filters.value) {
+                                          //   if (element.isNotEmpty  && element.first == localList.first) {
+                                          //     filters.value.remove(element);
+                                          //   }
+                                          // }
                                           refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                          filters.value.add(localList);
+                                          // filters.value[index] = localList;
                                         },
                                       ),
                                     ),
@@ -884,9 +899,10 @@ class _TableViewState extends State<TableView> {
                                         onTap: () {
                                           if (filters.value.isNotEmpty) {
                                             filters.value.removeAt(index);
+                                            if(controllersList[filters.value[index][0]] != null) {
+                                              controllersList[filters.value[index][0]]!.clear();
+                                            }
                                           }
-                                          filterCount.removeAt(index);
-                                          filterControllers.removeAt(index);
                                           setState(() {});
                                         },
                                         child: const Icon(
@@ -908,6 +924,7 @@ class _TableViewState extends State<TableView> {
                                       ? null
                                       : () {
                                     filterCount.add(filterCount.length);
+                                    filters.value.add(["","",""]);
                                     filterControllers.add(TextEditingController());
                                     setState(() {});
                                   },
@@ -926,6 +943,9 @@ class _TableViewState extends State<TableView> {
                                         sortBy: sortByWithOrder.value,
                                         length: rowsPerPage));
                                     Navigator.pop(context);
+                                    controllersList.forEach((key, value) {
+                                      value.clear();
+                                    });
                                   },
                                   child: const Text(StringConstants.clearFilters)),
                               const SizedBox(
@@ -933,14 +953,16 @@ class _TableViewState extends State<TableView> {
                               ),
                               ElevatedButton(
                                   onPressed: () {
-                                    formKey.currentState!.save();
-                                    refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                    mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                        baseUrl: tableHeader.value!.actionApi,
-                                        filters: filters.value,
-                                        sortBy: sortByWithOrder.value,
-                                        length: rowsPerPage));
-                                    Navigator.pop(context);
+                                    if(formKey.currentState!.validate()){
+                                      formKey.currentState!.save();
+                                      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                      mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
+                                          baseUrl: tableHeader.value!.actionApi,
+                                          filters: filters.value,
+                                          sortBy: sortByWithOrder.value,
+                                          length: rowsPerPage));
+                                      Navigator.pop(context);
+                                    }
                                   },
                                   child: const Text(StringConstants.applyFilters)),
                             ],
@@ -1059,18 +1081,19 @@ class _TableViewState extends State<TableView> {
                     filters.value.clear();
                     sortByWithOrder.value = "";
                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                    controllersList = [];
+                    controllersList = {};
                     columnMeta = [];
                     for (var x in tableHeader.value!.data.columns) {
+                      controllersList[x.key] = TextEditingController();
                       if (x.sort.sortEnabled) {
                         sortList.add({x.key: x.displayName});
                       }
                       if (x.filterData.supportedFilters.isNotEmpty) {
-                        validFilters.add(x);
+                        validFilters[x.key] = x;
                       }
                     }
-                    controllersList = List.generate(tableHeader.value!.data.columns.length,
-                            (index) => TextEditingController());
+                    // controllersList = List.generate(tableHeader.value!.data.columns.length,
+                    //         (index) => TextEditingController());
                     columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
                     if(tableHeader.value!.actions != null) {
                       columnMeta.add(ColumnMeta(150, false,false));
@@ -1166,18 +1189,19 @@ class _TableViewState extends State<TableView> {
                                       filters.value.clear();
                                       sortByWithOrder.value = "";
                                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                      controllersList = [];
+                                      controllersList = {};
                                       columnMeta = [];
                                       for (var x in tableHeader.value!.data.columns) {
+                                        controllersList[x.key] = TextEditingController();
                                         if (x.sort.sortEnabled) {
                                           sortList.add({x.key: x.displayName});
                                         }
                                         if (x.filterData.supportedFilters.isNotEmpty) {
-                                          validFilters.add(x);
+                                          validFilters[x.key] = x;
                                         }
                                       }
-                                      controllersList = List.generate(tableHeader.value!.data.columns.length,
-                                              (index) => TextEditingController());
+                                      // controllersList = List.generate(tableHeader.value!.data.columns.length,
+                                      //         (index) => TextEditingController());
                                       columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
                                       if(tableHeader.value!.actions != null) {
                                         columnMeta.add(ColumnMeta(250, false,false));
@@ -1221,6 +1245,11 @@ class _TableViewState extends State<TableView> {
                   .toList(),
               onChanged: (val) {
                 rowHeight.value.clear();
+                // scrollList.clear();
+                // scrollList = List.generate(rowsPerPage+2, (index) => null);
+                // for (int x = 0; x < scrollList.length; x++) {
+                //   scrollList[x] = _controllerGroup.addAndGet();
+                // }
                 rowsPerPage = val!;
                 for(int y = 0; y < rowsPerPage; y++) {
                   rowHeight.value.add(40);
@@ -1301,4 +1330,11 @@ class Header extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
+}
+
+class ExpansionMeta {
+  ExpansionMeta({required this.isExpended,required this.body,required this.header});
+  bool isExpended;
+  Widget header;
+  Widget body;
 }

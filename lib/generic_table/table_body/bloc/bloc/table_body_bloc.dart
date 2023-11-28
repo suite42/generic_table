@@ -15,7 +15,7 @@ class TableBodyBloc extends Bloc<TableRowEvents, TableRowStates> {
     on<FetchTableRowDataEvent>((event, emit) async {
       emit(TableRowLoadingState());
       final res = await _apiServices.getTableRows(filters: event.filters,sortBy: event.sortBy,length: event.length, baseUrl: event.baseUrl);
-      res.status == 200 ? emit(TableRowLoadedState(res.data)) : emit(TableRowErrorState(res.data));
+      res.status == 200 ? emit(TableRowLoadedState(res.data)) : emit(TableRowErrorState(res.message));
     });
 
     // on<FilterTableRowEvent>((event, emit) async {

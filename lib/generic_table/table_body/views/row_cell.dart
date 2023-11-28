@@ -37,17 +37,10 @@ class RowCell extends StatefulWidget {
 class _RowCellState extends State<RowCell> {
 
   ValueNotifier<String> _valueNotifier = ValueNotifier("");
-  //
-  // @override
-  // void initState() {
-  //   _valueNotifier.value = "${widget.message.rows[widget.index].row[widget.subIndex].value ?? ""}";
-  //   super.initState();
-  // }
 
   @override
   Widget build(BuildContext context) {
     _valueNotifier.value = "${widget.message.rows[widget.index].row[widget.subIndex].value ?? ""}";
-
     switch(widget.tableHeader.data.columns[widget.subIndex].dataType.toLowerCase()) {
       case "text" : return buildContainer(child: widget.selectedCell == widget.index && widget.message.rows[widget.index].row[widget.subIndex].writeEnabled
           ? buildTextFormField(context)

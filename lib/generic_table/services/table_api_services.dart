@@ -30,16 +30,14 @@ class ApiServices {
     url += "${filters != null && filters.isNotEmpty ? "filters=${jsonEncode(filters)}" : ""}&limit_page_length=$length&orderBy=${sortBy ?? ""}";
 
     print(url);
-    // print(uri);
-
     final res = await GlobalMethods.getRequest(url);
 
-    // print(res.body);
+    print(res.body);
 
     if(res.statusCode == 200) {
-      return ApiResponseModel(status: res.statusCode, message: "message", data: tableRowDataModelFromJson(res.body));
+      return ApiResponseModel(status: res.statusCode, message: "Success", data: tableRowDataModelFromJson(res.body));
     } else {
-      return ApiResponseModel(status: res.statusCode, message: "message", data: res.body);
+      return ApiResponseModel(status: res.statusCode, message: jsonDecode(res.body)["readable_message"], data: res.body);
     }
 
   }
