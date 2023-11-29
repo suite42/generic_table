@@ -6,7 +6,6 @@ import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
 void main() {
   runApp(const MyApp());
-  StringConstants.token = "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjBiYmQyOTllODU2MmU3MmYyZThkN2YwMTliYTdiZjAxMWFlZjU1Y2EiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vc3VpdGU0Mi1kZXYiLCJhdWQiOiJzdWl0ZTQyLWRldiIsImF1dGhfdGltZSI6MTcwMTE3ODE4NiwidXNlcl9pZCI6IjZ2YVZXUEk0a3VnS3phbWVRbHp4RHZkM2FVUTIiLCJzdWIiOiI2dmFWV1BJNGt1Z0t6YW1lUWx6eER2ZDNhVVEyIiwiaWF0IjoxNzAxMTc4MTg2LCJleHAiOjE3MDExODE3ODYsImVtYWlsIjoicmFtQHN1aXRlNDIuaW4iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJyYW1Ac3VpdGU0Mi5pbiJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.ju88R3HYM427QQ-GxkzpmExHe9EJSr6ZkOB4dMreowRCGclP6nbnmxKa_YsJZBfWfoopinM6b7mcqt8MnacujyGSP_jF42sP66OS1HHeQ3JMwe_NVS7pwUw-0OYVBD2Ulc_F7MRXi5LT7enP7qJjb_t1qBPQF_5eaHRSmObNvcB34GHQeBE1G6HHo_7r27U1IWszlsTZ-dasC7shcjgPC_Ahd1z-iSQrxiAIfMcuTusItbRD4VLLlT2NWp719C1wcb3fnf9_PYBZdzWagNW0vaWW_dz3qGpmeqamCFhXF9YzalofMtxm3O-x2pVpU4pYiAnYT-BnaEj-rxmBdZDJmw";
 }
 
 class MyApp extends StatelessWidget {
@@ -17,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext contextx) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Generic Table',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

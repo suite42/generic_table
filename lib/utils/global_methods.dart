@@ -56,4 +56,13 @@ class GlobalMethods {
     return Color(int.parse(str.replaceFirst("#", "0xFF", 0)));
   }
 
+  static double getTextLengthInPixels({required String text, TextStyle? style}) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text,style: style),
+      textDirection: TextDirection.ltr
+    );
+    textPainter.layout();
+    return textPainter.width;
+  }
+
 }

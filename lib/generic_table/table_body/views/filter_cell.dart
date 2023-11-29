@@ -6,7 +6,9 @@ class FilterCell extends StatelessWidget {
     super.key,
     required this.columnSize,
     required this.controller,
-    required this.tableHeader, required this.index, required this.onChanged,
+    required this.tableHeader, required this.index,
+    required this.onChanged,
+    required this.onSubmit,
   });
 
   final double columnSize;
@@ -14,6 +16,7 @@ class FilterCell extends StatelessWidget {
   final ValueNotifier<TableHeader?> tableHeader;
   final int index;
   final Function(String) onChanged;
+  final Function(String) onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +51,7 @@ class FilterCell extends StatelessWidget {
             fillColor: Colors.grey.shade100),
         enabled: tableHeader.value!.data.columns[index].filterData.supportedFilters.isNotEmpty,
         cursorHeight: 14,
+        onFieldSubmitted: onSubmit,
         onChanged: onChanged,
       ),
     );
