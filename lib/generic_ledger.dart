@@ -193,7 +193,7 @@ class _TableViewState extends State<TableView> {
     return BlocConsumer<TableBodyBloc, TableRowStates>(
         listener: (context, state) {
           if (state is TableRowLoadedState) {
-            for(int i=0;i < rowsPerPage; i++) {
+            for(int i=0;i < state.tableRowDataModel.message.rows.length; i++) {
               for(int j=0;j < state.tableRowDataModel.message.rows[i].row.length; j++) {
                 cellMaxWidth[j] =  j >= state.tableRowDataModel.message.rows[i].row.length ? 150.0 : cellMaxWidth[j] < GlobalMethods.getTextLengthInPixels(text: state.tableRowDataModel.message.rows[i].row[j].value.toString(),style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)) ? GlobalMethods.getTextLengthInPixels(text: state.tableRowDataModel.message.rows[i].row[j].value.toString(),style: const TextStyle(fontSize: 16,fontWeight: FontWeight.bold)) : cellMaxWidth[j];
               }
