@@ -187,7 +187,6 @@ class _TableViewState extends State<TableView> {
           )),
     );
   }
-  List<ExpansionMeta> exMeta = [];
 
   BlocConsumer<TableBodyBloc, TableRowStates> tableBody(BuildContext mainContext) {
     return BlocConsumer<TableBodyBloc, TableRowStates>(
@@ -229,10 +228,12 @@ class _TableViewState extends State<TableView> {
                         child: ValueListenableBuilder(
                             valueListenable: rowHeight,
                             builder: (context, snapshot,wid) {
-                              return CustomExpansionTile(
-                                controlAffinity: ListTileControlAffinity.leading,
-                                tilePadding: EdgeInsets.zero,
-                                title: SizedBox(
+                              return
+                                // CustomExpansionTile(
+                                // controlAffinity: ListTileControlAffinity.leading,
+                                // tilePadding: EdgeInsets.zero,
+                                // title:
+                                SizedBox(
                                   height: snapshot[index],
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -376,8 +377,8 @@ class _TableViewState extends State<TableView> {
                                               child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
                                     ],
                                   ),
-                                ),
-                              );
+                                );
+                              // );
                             }
                         ),
                       ),
@@ -397,7 +398,7 @@ class _TableViewState extends State<TableView> {
     return Positioned(
         top: 50,
         height: 40,
-        left: 34,
+        left: 0,
         right: 0,
         child: CustomScrollView(
           controller: scrollList[1],
@@ -473,7 +474,8 @@ class _TableViewState extends State<TableView> {
     }
     return Positioned(
       height: 55,
-      left: 34,
+      // left: 34,
+      left: 0,
       right: 0,
       child: CustomScrollView(
         controller: scrollList[0],

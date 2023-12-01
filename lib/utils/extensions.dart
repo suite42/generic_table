@@ -9,4 +9,9 @@ extension Capitalize on String {
      return str.replaceFirst("%25", "",str.length-3);
   }
 
+  String encodeUrl() {
+    String str = replaceAll("&", "%26");
+    return str;
+  }
+
 }
