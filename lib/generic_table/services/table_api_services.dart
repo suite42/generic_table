@@ -11,7 +11,7 @@ class ApiServices {
     
     try {
       final res = await GlobalMethods.getRequest(StringConstants.headerUrl);
-      print(res.body);
+      // print(res.body);
       if(res.statusCode == 200) {
         return ApiResponseModel(status: res.statusCode, message: "message", data: genericTableModelFromJson(res.body));
       } else {
@@ -32,7 +32,7 @@ class ApiServices {
     print(url);
     final res = await GlobalMethods.getRequest(url);
 
-    print(res.body);
+    // print(res.body);
 
     if(res.statusCode == 200) {
       return ApiResponseModel(status: res.statusCode, message: "Success", data: tableRowDataModelFromJson(res.body));
@@ -47,7 +47,7 @@ class ApiServices {
     try {
       final res = await GlobalMethods.postRequest(baseUrl,body);
 
-      print(res.body);
+     // print(res.body);
       if(res.statusCode == 200) {
         return ApiResponseModel(status: res.statusCode, message: "message", data: "");
       } else {
