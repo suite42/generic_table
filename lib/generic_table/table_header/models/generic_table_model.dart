@@ -45,6 +45,7 @@ class TableHeader {
   List<int> perPageEntryOptions;
   int totalRows;
   int rowsPerPage;
+  String defaultSort;
   Data data;
   Map<String,dynamic>? actions;
   String actionApi;
@@ -54,6 +55,7 @@ class TableHeader {
     required this.perPageEntryOptions,
     required this.totalRows,
     required this.rowsPerPage,
+    required this.defaultSort,
     required this.data,
     required this.actionApi,
     this.actions,
@@ -66,6 +68,7 @@ class TableHeader {
       perPageEntryOptions: List<int>.from(json["per_page_entry_options"].map((x) => x)),
       totalRows: json["total_rows"],
       rowsPerPage: json["rows_per_page"],
+      defaultSort: json["default_sort"],
       data: Data.fromJson(json["data"]),
       actionApi: json["action_api"],
       actions: json["actions"],
@@ -103,6 +106,7 @@ class TableColumn {
   String displayName;
   bool hidden;
   String dataType;
+  double cellWidth;
   FilterData filterData;
   Sort sort;
   WriteOptions writeOptions;
@@ -111,6 +115,7 @@ class TableColumn {
     required this.key,
     required this.displayName,
     required this.hidden,
+    required this.cellWidth,
     required this.dataType,
     required this.filterData,
     required this.sort,
@@ -122,6 +127,7 @@ class TableColumn {
     displayName: json["display_name"],
     hidden: json["hidden"],
     dataType: json["data_type"],
+    cellWidth: json["cell_width"] ?? 150,
     filterData: FilterData.fromJson(json["filter_data"]),
     sort: Sort.fromJson(json["sort"]),
     writeOptions: WriteOptions.fromJson(json["write_options"]),

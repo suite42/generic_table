@@ -65,4 +65,5 @@ class GlobalMethods {
     return textPainter.width;
   }
 
+
 }

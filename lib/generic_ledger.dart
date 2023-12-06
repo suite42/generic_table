@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:generic_ledger/generic_table/generic_model/column_meta.dart';
 import 'package:generic_ledger/generic_table/table_body/models/table_row_data_model.dart';
-import 'package:generic_ledger/generic_table/widgets/custom_expansion_tile.dart';
 import 'package:generic_ledger/utils/extensions.dart';
 import 'package:generic_ledger/utils/global_methods.dart';
 import 'package:generic_ledger/utils/string_constants.dart';
+import 'package:go_router/go_router.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import 'generic_table/table_body/bloc/bloc/payment_bloc.dart';
 import 'generic_table/table_body/bloc/bloc/table_body_bloc.dart';
@@ -16,10 +16,38 @@ import 'generic_table/table_body/views/row_cell.dart';
 import 'generic_table/table_header/bloc/bloc/table_bloc.dart';
 import 'generic_table/table_header/models/generic_table_model.dart';
 
-class GenericTable extends StatelessWidget {
-  const GenericTable({super.key, this.tableName});
+String basePath = "";
+
+
+class GenericTable extends StatefulWidget {
+  const GenericTable({super.key,required this.basPath,this.tableName});
+  final String basPath;
   final String? tableName;
+
+  @override
+  State<GenericTable> createState() => _GenericTableState();
+}
+
+class _GenericTableState extends State<GenericTable> {
+  late final GoRouter _router;
   // This widget is the root of this application.
+  @override
+  void initState() {
+     _router = GoRouter(
+        initialLocation: widget.basPath.contains("/") ? widget.basPath : "/${widget.basPath}",
+        routes: [
+          GoRoute(
+            name: widget.basPath,
+            path: widget.basPath.contains("/") ? widget.basPath : "/${widget.basPath}",
+            builder: (context, state) {
+              // print("aaaa ${state.uri.queryParameters}");
+              return TableView(tableName: widget.tableName,params: state.uri.queryParameters,);
+            },
+          )
+        ]);
+    basePath = widget.basPath;
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -28,21 +56,29 @@ class GenericTable extends StatelessWidget {
         BlocProvider(create: (context) => TableBodyBloc()),
         BlocProvider(create: (context) => PaymentBloc()),
       ],
-      child: TableView(tableName: tableName,),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+          routeInformationParser: _router.routeInformationParser,
+          routerDelegate: _router.routerDelegate,
+        routeInformationProvider: _router.routeInformationProvider,
+      ),
     );
   }
 }
 
+
 class TableView extends StatefulWidget {
-  const TableView({super.key, this.tableName});
+  const TableView({super.key, this.tableName,this.params});
 
   final String? tableName;
+  final Map<String, dynamic>? params;
 
   @override
   State<TableView> createState() => _TableViewState();
 }
 
 class _TableViewState extends State<TableView> {
+
   int? selectedCell;
 
   int? colSelected;
@@ -51,12 +87,17 @@ class _TableViewState extends State<TableView> {
 
   List<double> cellMaxWidth = [];
 
+  int sortedIndex = 1;
+
+  List<TableHeader> tableList = [];
+
   List<ScrollController?> scrollList = List.generate(102, (index) => null);
 
   final LinkedScrollControllerGroup _controllerGroup = LinkedScrollControllerGroup();
 
   List<int> filterCount = [];
   List<MessageRow> row = [];
+  Map<String, dynamic> localParams = {};
   late Update? tableUpdate;
   final ValueNotifier<List<double>> rowHeight = ValueNotifier([]);
 
@@ -97,6 +138,9 @@ class _TableViewState extends State<TableView> {
 
   @override
   Widget build(BuildContext mainContext) {
+    if(localParams.isEmpty) {
+      localParams = widget.params!;
+    }
     return BlocListener<TableBloc, TableStates>(
       listener: (context, state) {
         if(state is TableUpdateState) {
@@ -180,7 +224,7 @@ class _TableViewState extends State<TableView> {
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
           child: Stack(
             children: [
-              tableColumns(),
+              tableColumns(mainContext),
               tableFilters(mainContext),
               tableBody(mainContext),
             ],
@@ -192,9 +236,13 @@ class _TableViewState extends State<TableView> {
     return BlocConsumer<TableBodyBloc, TableRowStates>(
         listener: (context, state) {
           if (state is TableRowLoadedState) {
+            // print("widget.params ${widget.params}");
+            // print("localParams ${localParams}");
+
             for(int i=0;i < state.tableRowDataModel.message.rows.length; i++) {
-              for(int j=0;j < state.tableRowDataModel.message.rows[i].row.length; j++) {
-                cellMaxWidth[j] =  j >= state.tableRowDataModel.message.rows[i].row.length ? 150.0 : cellMaxWidth[j] < GlobalMethods.getTextLengthInPixels(text: state.tableRowDataModel.message.rows[i].row[j].value.toString(),style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)) ? GlobalMethods.getTextLengthInPixels(text: state.tableRowDataModel.message.rows[i].row[j].value.toString(),style: const TextStyle(fontSize: 16,fontWeight: FontWeight.bold)) : cellMaxWidth[j];
+              for(int j=0;j < cellMaxWidth.length; j++) {
+                double cellWidth = j == 0 ? 150.0 : GlobalMethods.getTextLengthInPixels(text: state.tableRowDataModel.message.rows[i].row[j-1].value.toString(),style: const TextStyle(fontSize: 16,fontWeight: FontWeight.bold));
+                cellMaxWidth[j] =  cellMaxWidth[j] <  cellWidth ? cellWidth : cellMaxWidth[j];
               }
             }
           }
@@ -221,6 +269,13 @@ class _TableViewState extends State<TableView> {
                       (row.length / rowsPerPage).ceil() == activePage ? row.length - (rowsPerPage * (activePage - 1))
                           : rowsPerPage,
                           (index) =>  InkWell(
+                            onTap: (){
+                              if(selectedCell != null && tableUpdate != null && updateBody.isNotEmpty) {
+                                context.read<TableBloc>().add(UpdateTable(tableUpdate!.actionApi, {"data" : updateBody}));
+                              }
+                              selectedCell = null;
+                              setState(() {});
+                            },
                         onDoubleTap: () {
                             selectedCell = index;
                             setState(() {});
@@ -244,19 +299,19 @@ class _TableViewState extends State<TableView> {
                                           shrinkWrap: true,
                                           primary: false,
                                           scrollDirection: Axis.horizontal,
-                                          slivers: List.generate((tableHeader.value!.actions != null ? row[index].row.length + 1 : row[index].row.length), (x) {
+                                          slivers: List.generate(columnMeta.length, (x) {
                                             return SliverPersistentHeader(
                                               pinned: columnMeta[x].isFreezed,
                                               delegate: Header(
                                                 extent: columnMeta[x].width,
-                                                child: tableHeader.value!.actions != null && x == row[index].row.length ? Container(
+                                                child: x == 0 ? Container(
                                                   padding: const EdgeInsets.only(left: 10),
                                                   // width: columnMeta[index].width,
                                                   decoration: BoxDecoration(
                                                       color:  const Color(0xFFF2F2F2),
                                                       border: Border(bottom: BorderSide(color: Colors.grey.shade300))
                                                   ),
-                                                  child: row[index].action!.isNotEmpty ? Center(
+                                                  child: row[index].action != null && row[index].action!.isNotEmpty ? Center(
                                                     child: ListView.builder(
                                                         shrinkWrap: true,
                                                         scrollDirection: Axis.horizontal,
@@ -279,11 +334,7 @@ class _TableViewState extends State<TableView> {
                                                                 child: BlocConsumer<PaymentBloc,PaymentsState>(
                                                                     listener: (context, state) {
                                                                       if(state is PaymentsLoadedState) {
-                                                                        mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                                                            baseUrl: tableHeader.value!.actionApi,
-                                                                            filters: filters.value,
-                                                                            sortBy: sortByWithOrder.value,
-                                                                            length: rowsPerPage));
+                                                                        dataUpdate(mainContext);
                                                                         Navigator.pop(context);
                                                                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
                                                                       } else if (state is PaymentsErrorState) {
@@ -355,7 +406,7 @@ class _TableViewState extends State<TableView> {
                                                   body: updateBody,
                                                   rowsPerPage: rowsPerPage,
                                                   index: index,
-                                                  subIndex:x,
+                                                  subIndex:x-1,
                                                   selectedCell: selectedCell,
                                                   cellSize: columnMeta[x].width,
                                                   isSelected: colSelected != null && colSelected == x,
@@ -387,11 +438,29 @@ class _TableViewState extends State<TableView> {
               ),
             );
           } else if(state is TableRowErrorState) {
-            return Center(child: Text(state.message,textAlign: TextAlign.center,style: TextStyle(color: Colors.red,fontSize: 18,fontWeight: FontWeight.bold),));
+            return Center(child: Text(state.message,textAlign: TextAlign.center,style: const TextStyle(color: Colors.red,fontSize: 18,fontWeight: FontWeight.bold),));
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         });
+  }
+
+  void dataUpdate(BuildContext mainContext) {
+    Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName};
+    if(filters.value.isNotEmpty) {
+      params["filters"] = filters.value.toString();
+    }
+    if(sortByWithOrder.value.isNotEmpty) {
+      params["sortBy"] = sortByWithOrder.value;
+    }
+    params["rowsPerPage"] = rowsPerPage.toString();
+    // print("params $params");
+    mainContext.goNamed(basePath,queryParameters: params);
+    mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
+        baseUrl: tableHeader.value!.actionApi,
+        filters: filters.value,
+        sortBy: sortByWithOrder.value,
+        length: rowsPerPage));
   }
 
   Positioned tableFilters(BuildContext mainContext) {
@@ -405,39 +474,35 @@ class _TableViewState extends State<TableView> {
           shrinkWrap: true,
           primary: false,
           scrollDirection: Axis.horizontal,
-          slivers: List.generate(tableHeader.value!.data.columns.length, (x) {
+          slivers: List.generate(columnMeta.length, (x) {
             List<String> localList = [];
             return SliverPersistentHeader(
               delegate: Header(
                   extent: columnMeta[x].width,
-                  child: FilterCell(
+                  child: x == 0 ? Container(width: columnMeta[x].width,height: 40,color: Colors.white,) :  FilterCell(
                     columnSize: columnMeta[x].width,
-                    controller: controllersList[tableHeader.value!.data.columns[x].key]!,
+                    controller: controllersList[tableHeader.value!.data.columns[x-1].key]!,
                     tableHeader: tableHeader,
                     onChanged: (val) {
                       if ((val == "%25%25")|| val.isEmpty) {
                         filters.value.remove(localList);
                         filterCount.remove(filterCount.length);
-                        mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                            baseUrl: tableHeader.value!.actionApi,
-                            filters: filters.value,
-                            sortBy: sortByWithOrder.value,
-                            length: rowsPerPage));
+                        dataUpdate(mainContext);
                         setState(() {});
                       }
                     },
                     onSubmit: (val) {
-                      tableHeader.value!.data.columns[x].filterData.defaultFilterType == "Like" ||
-                          tableHeader.value!.data.columns[x].filterData.defaultFilterType ==
+                      tableHeader.value!.data.columns[x-1].filterData.defaultFilterType == "Like" ||
+                          tableHeader.value!.data.columns[x-1].filterData.defaultFilterType ==
                               "Not Like"
                           ? val = "%25$val%25"
                           : val;
-                      if (!usedControllers.contains(x)) {
-                        usedControllers.add(x);
+                      if (!usedControllers.contains(x-1)) {
+                        usedControllers.add(x-1);
                       }
                        localList = [
-                        tableHeader.value!.data.columns[x].key,
-                        tableHeader.value!.data.columns[x].filterData.defaultFilterType,
+                        tableHeader.value!.data.columns[x-1].key,
+                        tableHeader.value!.data.columns[x-1].filterData.defaultFilterType,
                         val
                       ];
                       var xa = List.from(filters.value);
@@ -452,14 +517,9 @@ class _TableViewState extends State<TableView> {
                         filters.value.remove(localList);
                         filterCount.remove(filterCount.length);
                       }
-                      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                      mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                          baseUrl: tableHeader.value!.actionApi,
-                          filters: filters.value,
-                          sortBy: sortByWithOrder.value,
-                          length: rowsPerPage));
+                      dataUpdate(mainContext);
                     },
-                    index: x,
+                    index: x-1,
                   )),
               pinned: columnMeta[x].isFreezed,
             );
@@ -467,11 +527,7 @@ class _TableViewState extends State<TableView> {
         ));
   }
 
-  Positioned tableColumns() {
-    int length = tableHeader.value!.data.columns.length;
-    if(tableHeader.value!.actions != null) {
-      length++;
-    }
+  Positioned tableColumns(BuildContext mainContext) {
     return Positioned(
       height: 55,
       // left: 34,
@@ -483,22 +539,22 @@ class _TableViewState extends State<TableView> {
         primary: false,
         scrollDirection: Axis.horizontal,
         slivers: [
-          for(int x = 0; x < length; x++)
+          for(int x = 0; x < columnMeta.length; x++)
             SliverPersistentHeader(
               pinned: columnMeta[x].isFreezed,
               delegate: Header(
                   extent: columnMeta[x].width,
                   child: DragTarget<List>(
                     onAcceptWithDetails: (val){
-                      final localColumnMeta = columnMeta[x];
-                      final localColumnData = tableHeader.value!.data.columns[x];
-                      columnMeta[x] = val.data[0];
-                      tableHeader.value!.data.columns[x] = val.data[2];
+                      final localColumnMeta = columnMeta[x-1];
+                      final localColumnData = tableHeader.value!.data.columns[x-1];
+                      columnMeta[x-1] = val.data[0];
+                      tableHeader.value!.data.columns[x-1] = val.data[2];
                       columnMeta[val.data[1]] = localColumnMeta;
                       tableHeader.value!.data.columns[val.data[1]] = localColumnData;
                       for (var element in row) {
-                      final localRowData = element.row[x];
-                        element.row[x] = element.row[val.data[1]];
+                      final localRowData = element.row[x-1];
+                        element.row[x-1] = element.row[val.data[1]];
                         element.row[val.data[1]] = localRowData;
                       }
                       setState(() {
@@ -506,29 +562,30 @@ class _TableViewState extends State<TableView> {
                       });
                     },
                     builder: (BuildContext context, List<Object?> candidateData, List<dynamic> rejectedData) => Draggable(
-                      data: tableHeader.value!.actions != null && x == (length - 1) ? null : [columnMeta[x],x,tableHeader.value!.data.columns[x]],
+                      data: x == 0 ? null : [columnMeta[x-1],x-1,tableHeader.value!.data.columns[x-1]],
                       feedback: Card(
                         child: Container(
                           padding: const EdgeInsets.only(left: 5),
                           width: columnMeta[x].width,
                           color: const Color(0xFFF2F2F2),
-                          child: tableHeader.value!.actions != null && x == (length - 1) ? const Center(
-                            child: Text("Actions",style: TextStyle(fontWeight: FontWeight.bold),),
-                          ) : Row(
+                          child: x == 0 ? const Center(
+                            child: Text("Actions",style: TextStyle(fontWeight: FontWeight.bold),)
+                          ) :
+                          Row(
                             children: [
                               InkWell(
                                 onTap: (){
-                                  columnMeta[x].isFreezed = !columnMeta[x].isFreezed;
+                                  columnMeta[x-1].isFreezed = !columnMeta[x-1].isFreezed;
                                   setState(() {
 
                                   });
                                 },
-                                child: Icon(columnMeta[x].isFreezed ? Icons.push_pin : Icons.push_pin_outlined,size: 16,),
+                                child: Icon(columnMeta[x-1].isFreezed ? Icons.push_pin : Icons.push_pin_outlined,size: 16,),
                               ),
                               const SizedBox(width: 5,),
                               Expanded(
                                   child: Tooltip(
-                                      message: tableHeader.value!.data.columns[x].displayName.titleCase(),
+                                      message: tableHeader.value!.data.columns[x-1].displayName.titleCase(),
                                       preferBelow: false,
                                       child: ValueListenableBuilder(
                                           valueListenable: sortByWithOrder,
@@ -537,10 +594,10 @@ class _TableViewState extends State<TableView> {
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
                                                 Expanded(
-                                                  child: Text(tableHeader.value!.data.columns[x].displayName.titleCase(),
+                                                  child: Text(tableHeader.value!.data.columns[x-1].displayName.titleCase(),
                                                       style: const TextStyle(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis)),
                                                 ),
-                                                if (tableHeader.value!.data.columns[x].key == sortByWithOrder.value.split(" ")[0])
+                                                if (tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0])
                                                   sortByWithOrder.value.split(" ")[1] == "ASC"
                                                       ? const Icon(
                                                     Icons.arrow_upward,
@@ -570,30 +627,20 @@ class _TableViewState extends State<TableView> {
                           ),
                         ),
                       ),
-                      child: MouseRegion(
-                        // cursor: SystemMouseCursors.resizeDown,
-                        child: GestureDetector(
-                          // onTap: (){
-                          //   colSelected == x ? colSelected = null : colSelected = x;
-                          //   setState(() {
-                          //
-                          //   });
-                          // },
-                          onDoubleTap: (){
-                            print("cellMaxWidth[x] ${cellMaxWidth[x]}");
-                            print("cellMaxWidth[x] ${cellMaxWidth}");
-                            columnMeta[x].width = cellMaxWidth[x]+20 < 75 ? 75 : cellMaxWidth[x]+20;
-                            setState(() {
-
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.only(left: 5),
-                            margin: const EdgeInsets.only(bottom: 15),
-                            color: colSelected != null && colSelected == x ? const Color(0xFFA8A7A7) : const Color(0xFFF2F2F2),
-                            child: tableHeader.value!.actions != null && x == (length - 1) ? const Center(
-                              child: Text("Actions",style: TextStyle(fontWeight: FontWeight.bold),),
-                            ) : Row(
+                      child: GestureDetector(
+                        onDoubleTap: (){
+                          columnMeta[x].width = cellMaxWidth[x]+20 < 75 ? 75 : cellMaxWidth[x]+20;
+                          setState(() {});
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.only(left: 5),
+                          margin: const EdgeInsets.only(bottom: 15),
+                          decoration: BoxDecoration(
+                              color: colSelected != null && colSelected == x ? const Color(0xFFA8A7A7) : const Color(0xFFF2F2F2),
+                              border: x == 0 ? const Border(right: BorderSide(color: Colors.grey,width: 1)) : null
+                          ),
+                          child: x == 0 ?  Center(
+                            child: Row(
                               children: [
                                 InkWell(
                                   onTap: (){
@@ -605,48 +652,105 @@ class _TableViewState extends State<TableView> {
                                   child: Icon(columnMeta[x].isFreezed ? Icons.push_pin : Icons.push_pin_outlined,size: 16,),
                                 ),
                                 const SizedBox(width: 5,),
-                                Expanded(
+                                const Text("Actions",style: TextStyle(fontWeight: FontWeight.bold),),
+                              ],
+                            ),
+                          ) : Row(
+                            children: [
+                              InkWell(
+                                onTap: (){
+                                  columnMeta[x].isFreezed = !columnMeta[x].isFreezed;
+                                  setState(() {
+
+                                  });
+                                },
+                                child: Icon(columnMeta[x].isFreezed ? Icons.push_pin : Icons.push_pin_outlined,size: 16,),
+                              ),
+                              const SizedBox(width: 5,),
+                              Expanded(
+                                  child: MouseRegion(
+                                    onEnter: (eve){
+                                      columnMeta[x].isHover = true;
+                                      setState(() {
+
+                                      });
+                                      // }
+                                    },
+                                    onExit: (val){
+                                      columnMeta[x].isHover = false;
+                                      setState(() {
+
+                                      });
+                                    },
                                     child: Tooltip(
-                                        message: tableHeader.value!.data.columns[x].displayName.titleCase(),
+                                        message: tableHeader.value!.data.columns[x-1].displayName.titleCase(),
                                         preferBelow: false,
                                         child: ValueListenableBuilder(
                                             valueListenable: sortByWithOrder,
                                             builder: (context, snapshot, wid) {
+                                              if(columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) {
+                                                sortedIndex = x-1;
+                                                // print("sortedIndex $sortedIndex");
+                                              }
+                                              // print("columnMeta[0].sortEnabled ${columnMeta[0].sortEnabled}");
                                               return Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   Expanded(
-                                                    child: Text(tableHeader.value!.data.columns[x].displayName.titleCase(),
+                                                    child: Text(tableHeader.value!.data.columns[x-1].displayName.titleCase(),
                                                         style: const TextStyle(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis)),
                                                   ),
-                                                  if (tableHeader.value!.data.columns[x].key == sortByWithOrder.value.split(" ")[0])
-                                                    sortByWithOrder.value.split(" ")[1] == "ASC"
-                                                        ? const Icon(
-                                                      Icons.arrow_upward,
-                                                      size: 14,
-                                                    )
-                                                        : const Icon(
-                                                      Icons.arrow_downward,
-                                                      size: 14,
-                                                    )
+                                                  if((columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) && columnMeta[x].sortEnabled)
+                                                  tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0] ? IconButton(
+                                                      onPressed: () {
+                                                        final localFilters = List.from(filters.value);
+                                                        for(var val in localFilters) {
+                                                          filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                        }
+                                                        lastValue.clear();
+                                                    if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
+                                                      sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
+                                                    } else {
+                                                      sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.asc}";
+                                                    }
+                                                    dataUpdate(mainContext);
+                                                  }, icon: sortByWithOrder.value.split(" ")[1] == "ASC"
+                                                      ? const Icon(
+                                                    Icons.arrow_upward,
+                                                    size: 16,
+                                                  )
+                                                      : const Icon(
+                                                    Icons.arrow_downward,
+                                                    size: 16,
+                                                  )) : IconButton(onPressed: (){
+                                                    final localFilters = List.from(filters.value);
+                                                    for(var val in localFilters) {
+                                                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                    }
+                                                    lastValue.clear();
+                                                    sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
+                                                    refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                                    dataUpdate(mainContext);
+                                                    setState(() {});
+                                                  }, icon: const Icon(Icons.swap_vert,size: 16,))
                                                 ],
                                               );
-                                            }))),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                MouseRegion(
-                                    cursor: SystemMouseCursors.resizeLeftRight,
-                                    child: GestureDetector(
-                                        onHorizontalDragUpdate: (val) {
-                                          setState(() {
-                                            final temp = 150 + val.localPosition.dx;
-                                            columnMeta[x].width = temp < 50 ? 50 : temp;
-                                          });
-                                        },
-                                        child: Center(child: Container(color: Colors.grey.withOpacity(.3), width: 3,height: 40,)))),
-                              ],
-                            ),
+                                            })),
+                                  )),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              MouseRegion(
+                                  cursor: SystemMouseCursors.resizeLeftRight,
+                                  child: GestureDetector(
+                                      onHorizontalDragUpdate: (val) {
+                                        setState(() {
+                                          final temp = 150 + val.localPosition.dx;
+                                          columnMeta[x].width = temp < 50 ? 50 : temp;
+                                        });
+                                      },
+                                      child: Center(child: Container(color: Colors.grey.withOpacity(.3), width: 3,height: 40,)))),
+                            ],
                           ),
                         ),
                       ),
@@ -690,18 +794,13 @@ class _TableViewState extends State<TableView> {
                         const SizedBox(width: 3),
                         InkWell(
                             onTap: () {
-                              list[index].length == 1 ? sortByWithOrder.value = "" : filters.value.remove(list[index]);
+                              list[index].length == 1 ? sortByWithOrder.value = tableHeader.value!.defaultSort : filters.value.remove(list[index]);
                               if (usedControllers.isNotEmpty) {
-                                // controllersList[usedControllers[index]].clear();
                                 usedControllers.removeAt(index);
                               }
                               controllersList[list[index][0]]!.clear();
+                              dataUpdate(mainContext);
                               refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                              mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                  baseUrl: tableHeader.value!.actionApi,
-                                  filters: filters.value,
-                                  sortBy: sortByWithOrder.value,
-                                  length: rowsPerPage));
                             },
                             child: const Icon(
                               Icons.clear,
@@ -714,8 +813,76 @@ class _TableViewState extends State<TableView> {
           );
         });
   }
-
+  List<String> lastValue = [];
   Row header(TableHeader? snapshot, BuildContext mainContext) {
+    // if(widget.params != null && !mapEquals(localParams, widget.params)) {
+    //   localParams = widget.params!;
+    //   if(tableHeader.value!.tableName != widget.params!["tableName"]){
+    //     tableHeader.value = null;
+    //   }
+    //   for (var element in tableList) {
+    //     if(element.tableName.contains(widget.params!["tableName"]) && tableHeader.value == null) {
+    //       tableHeader.value = element;
+    //       print("selected2222 ${element.tableName}");
+    //       print(tableHeader.value!.tableName);
+    //     }
+    //   }
+    //   Map<String, dynamic> params = {"tableName" : widget.params!["tableName"]};
+    //   if(widget.params!["filters"] != null) {
+    //     List<List<String>> paramFilters = [];
+    //     params["filters"] = widget.params!["filters"].split(",");
+    //     for(var x in widget.params!["filters"].split(",")) {
+    //       paramFilters.add(x.split(","));
+    //     }
+    //     filters.value = paramFilters;
+    //   }
+    //   if(widget.params!["sortBy"] != null) {
+    //     params["sortBy"] = widget.params!["sortBy"];
+    //     sortByWithOrder.value = widget.params!["sortBy"];
+    //   }
+    //   params["rowsPerPage"] = rowsPerPage.toString();
+    //   print("+++++ $params");
+    //   print("===== ${sortByWithOrder.value}");
+    //   mainContext.goNamed(basePath,queryParameters: params);
+    //   rowsPerPage = tableHeader.value!.rowsPerPage;
+    //   rowHeight.value.clear();
+    //   mainContext.read<TableBodyBloc>().add(
+    //       FetchTableRowDataEvent(
+    //           baseUrl: tableHeader.value!.actionApi,
+    //           length: rowsPerPage,
+    //           filters: filters.value,
+    //           sortBy: sortByWithOrder.value
+    //       ));
+    //   for(int y = 0; y < rowsPerPage; y++) {
+    //     rowHeight.value.add(40);
+    //   }
+    //   // sortList.clear();
+    //   // validFilters.clear();
+    //   // filters.value.clear();
+    //   // sortByWithOrder.value = "";
+    //   refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+    //   if(columnMeta.length != (tableHeader.value!.data.columns.length + (tableHeader.value!.actions != null ? 1 : 0))){
+    //     print("updating col");
+    //     print(columnMeta.length);
+    //     print(tableHeader.value!.data.columns.length);
+    //     controllersList = {};
+    //     columnMeta = [];
+    //     for (var x in tableHeader.value!.data.columns) {
+    //       controllersList[x.key] = TextEditingController();
+    //       if (x.sort.sortEnabled) {
+    //         sortList.add({x.key: x.displayName});
+    //       }
+    //       if (x.filterData.supportedFilters.isNotEmpty) {
+    //         validFilters[x.key] = x;
+    //       }
+    //     }
+    //     columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(tableHeader.value!.data.columns[index].cellWidth, tableHeader.value!.data.columns[index].hidden,false,false));
+    //     if(tableHeader.value!.actions != null) {
+    //       columnMeta.add(ColumnMeta(150, false,false,false));
+    //     }
+    //     cellMaxWidth = List.filled(columnMeta.length, 0.0);
+    //   }
+    // }
     return Row(
       children: [
         Container(
@@ -774,7 +941,6 @@ class _TableViewState extends State<TableView> {
                                 if(element.key == localList.first) {
                                   applicableFilter[element.key] = element.writeOptions.options.supportedValues as List<String>;
                                 }
-                                print(applicableFilter);
                               }
                               // print("object ${tableHeader.value!.data.columns[index].filterData.defaultFilterType}");
                               // validFilters.forEach((element) {
@@ -791,8 +957,6 @@ class _TableViewState extends State<TableView> {
                                         value: filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0],
                                         onChanged: tableHeader.value == null ? null : (val) {
                                           filters.value[index][0] = val!;
-                                          print(validFilters[filters.value[index][0]]);
-                                          print(filters.value);
                                           setState(() {});
                                         },
                                         onSaved: (val) {
@@ -828,7 +992,6 @@ class _TableViewState extends State<TableView> {
                                         value: filters.value[index][1].isEmpty ? validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!.filterData.defaultFilterType : filters.value[index][1],
                                         onChanged: (val) {
                                           filters.value[index][1] = val!;
-                                          print(filters.value[index][1]);
                                           setState((){});
                                         },
                                         onSaved: (val) {
@@ -966,11 +1129,7 @@ class _TableViewState extends State<TableView> {
                                     filterControllers.clear();
                                     filters.value.clear();
                                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                    mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                        baseUrl: tableHeader.value!.actionApi,
-                                        filters: filters.value,
-                                        sortBy: sortByWithOrder.value,
-                                        length: rowsPerPage));
+                                    dataUpdate(mainContext);
                                     Navigator.pop(context);
                                     controllersList.forEach((key, value) {
                                       value.clear();
@@ -985,11 +1144,7 @@ class _TableViewState extends State<TableView> {
                                     if(formKey.currentState!.validate()){
                                       formKey.currentState!.save();
                                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                      mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                          baseUrl: tableHeader.value!.actionApi,
-                                          filters: filters.value,
-                                          sortBy: sortByWithOrder.value,
-                                          length: rowsPerPage));
+                                      dataUpdate(mainContext);
                                       Navigator.pop(context);
                                     }
                                   },
@@ -1020,7 +1175,7 @@ class _TableViewState extends State<TableView> {
                   children: [
                     Expanded(
                         child: Icon(
-                          Icons.tune_outlined,
+                          Icons.sort_by_alpha,
                           size: 18,
                         )),
                     Text(StringConstants.sortBy),
@@ -1041,14 +1196,10 @@ class _TableViewState extends State<TableView> {
                           value: e.keys.first,
                           groupValue: sortByWithOrder.value.split(" ")[0],
                           onChanged: (value) {
-                            sortByWithOrder.value = "$value ${StringConstants.asc}";
+                            sortByWithOrder.value = "$value ${StringConstants.desc}";
                             Navigator.pop(context);
                             refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                            mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                                baseUrl: tableHeader.value!.actionApi,
-                                filters: filters.value,
-                                sortBy: sortByWithOrder.value,
-                                length: rowsPerPage));
+                            dataUpdate(mainContext);
                             setState(() {});
                           }))
                           .toList(),
@@ -1065,22 +1216,23 @@ class _TableViewState extends State<TableView> {
                   onPressed: snapshot.isEmpty
                       ? null
                       : () {
+                    final localFilters = List.from(filters.value);
+                    for(var val in localFilters) {
+                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                    }
+                    lastValue.clear();
                     if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
                       sortByWithOrder.value = "${sortByWithOrder.value.split(" ")[0]} ${StringConstants.desc}";
                     } else {
                       sortByWithOrder.value = "${sortByWithOrder.value.split(" ")[0]} ${StringConstants.asc}";
                     }
-                    mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                        baseUrl: tableHeader.value!.actionApi,
-                        filters: filters.value,
-                        sortBy: sortByWithOrder.value,
-                        length: rowsPerPage));
+                    dataUpdate(mainContext);
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5)),
-                  child: const Icon(Icons.swap_vert),
+                  child: const Icon(Icons.swap_vert,color: Colors.grey,),
                 );
               }),
         ),
@@ -1090,13 +1242,10 @@ class _TableViewState extends State<TableView> {
             child: BlocConsumer<TableBloc, TableStates>(
                 listener: (context, state) {
                   if(state is TableLoadedState && widget.tableName != null) {
-                    print(widget.tableName);
                     tableHeader.value = null;
                     for (var element in state.table.message.tables) {
                       if(element.tableName.contains(widget.tableName!)) {
                         tableHeader.value = element;
-                        print("selected ${element.tableName}");
-                        print(tableHeader.value!.tableName);
                       }
                     }
                     rowsPerPage = tableHeader.value!.rowsPerPage;
@@ -1108,7 +1257,7 @@ class _TableViewState extends State<TableView> {
                     sortList.clear();
                     validFilters.clear();
                     filters.value.clear();
-                    sortByWithOrder.value = "";
+                    sortByWithOrder.value = tableHeader.value!.defaultSort;
                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                     controllersList = {};
                     columnMeta = [];
@@ -1121,12 +1270,22 @@ class _TableViewState extends State<TableView> {
                         validFilters[x.key] = x;
                       }
                     }
-                    // controllersList = List.generate(tableHeader.value!.data.columns.length,
-                    //         (index) => TextEditingController());
-                    columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
-                    if(tableHeader.value!.actions != null) {
-                      columnMeta.add(ColumnMeta(150, false,false));
-                    }
+                    columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
+                        width: tableHeader.value!.data.columns[index].cellWidth,
+                        isFreezed: false,
+                        isHover: false,
+                        isSelected: false,
+                        sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
+                    ));
+                    // if(tableHeader.value!.actions != null) {
+                      columnMeta.insert(0,ColumnMeta(
+                          width: 150.0,
+                          isFreezed: false,
+                          isHover: false,
+                          isSelected: false,
+                          sortEnabled: false
+                      ));
+                    // }
                     cellMaxWidth = List.filled(columnMeta.length, 0.0);
                   }
                   else if(state is TableErrorState) {
@@ -1208,6 +1367,8 @@ class _TableViewState extends State<TableView> {
                                           tableHeader.value = x;
                                         }
                                       }
+                                      Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName,"rowsPerPage" : rowsPerPage.toString()};
+                                      mainContext.goNamed(basePath,queryParameters: params);
                                       rowsPerPage = tableHeader.value!.rowsPerPage;
                                       rowHeight.value.clear();
                                       mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(baseUrl: tableHeader.value!.actionApi,length: rowsPerPage));
@@ -1217,7 +1378,7 @@ class _TableViewState extends State<TableView> {
                                       sortList.clear();
                                       validFilters.clear();
                                       filters.value.clear();
-                                      sortByWithOrder.value = "";
+                                      sortByWithOrder.value = tableHeader.value!.defaultSort;
                                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                       controllersList = {};
                                       columnMeta = [];
@@ -1230,10 +1391,22 @@ class _TableViewState extends State<TableView> {
                                           validFilters[x.key] = x;
                                         }
                                       }
-                                      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(150, tableHeader.value!.data.columns[index].hidden,false));
-                                      if(tableHeader.value!.actions != null) {
-                                        columnMeta.add(ColumnMeta(250, false,false));
-                                      }
+                                      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
+                                          width: tableHeader.value!.data.columns[index].cellWidth,
+                                          isFreezed: false,
+                                          isHover: false,
+                                          isSelected: false,
+                                          sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
+                                      ));
+                                      // if(tableHeader.value!.actions != null) {
+                                        columnMeta.insert(0,ColumnMeta(
+                                            width: 150,
+                                            isFreezed: false,
+                                            isHover: false,
+                                            isSelected: false,
+                                            sortEnabled: false
+                                        ));
+                                      // }
                                       cellMaxWidth = List.filled(columnMeta.length, 0.0);
                                       FocusManager.instance.primaryFocus!.unfocus();
                                     },
@@ -1284,11 +1457,7 @@ class _TableViewState extends State<TableView> {
                   rowHeight.value.add(40);
                 }
                 activePage = 1;
-                mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
-                    baseUrl: tableHeader.value!.actionApi,
-                    filters: filters.value,
-                    sortBy: sortByWithOrder.value,
-                    length: rowsPerPage));
+                dataUpdate(mainContext);
                 setState(() {});
               }),
         ),
@@ -1297,18 +1466,36 @@ class _TableViewState extends State<TableView> {
           height: 25,
           width: 25,
           child: IconButton(
-              iconSize: 16,
-              style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey), padding: EdgeInsets.zero),
-              onPressed: () {
-                if (activePage > 1) activePage--;
-                setState(() {});
+              iconSize: 20,
+              style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
+              padding: EdgeInsets.zero,
+              onPressed: lastValue.isEmpty ? null : () {
+                final localFilters = List.from(filters.value);
+                for(var val in localFilters) {
+                  filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                }
+                if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[0].row[sortedIndex].value.toString()]);
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less or Equals",lastValue.last]);
+
+                } else {
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[0].row[sortedIndex].value.toString()]);
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater or Equals",lastValue.last]);
+                }
+                lastValue.remove(lastValue.last);
+                if(lastValue.isEmpty){
+                  for(var val in localFilters) {
+                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                  }
+                }
+                dataUpdate(mainContext);
+                // print("object ${filters.value}");
+                setState(() {
+
+                });
               },
+              tooltip: "Previous",
               icon: const Icon(Icons.keyboard_arrow_left)),
-        ),
-        const VerticalDivider(),
-        Text(
-          "$activePage of ${tableHeader.value == null ? 1 : (snapshot!.totalRows / rowsPerPage).ceil()}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const VerticalDivider(),
         SizedBox(
@@ -1316,14 +1503,29 @@ class _TableViewState extends State<TableView> {
             width: 25,
             child: IconButton(
               onPressed: () {
-                // if((state.table.data.rows.length / rowsPerPage).ceil() > activePage) activePage++;
-                // setState(() {
-                //
-                // });
+                final localFilters = List.from(filters.value);
+                for(var val in localFilters) {
+                  if(val.first == sortByWithOrder.value.split(" ")[0]) {
+                    filters.value.remove(val);
+                  }
+                }
+                lastValue.add(row[0].row[sortedIndex].value.toString());
+                // print(lastValue);
+                if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[row.length-1].row[sortedIndex].value.toString()]);
+                } else {
+                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[row.length-1].row[sortedIndex].value.toString()]);
+                }
+                // print("object ${filters.value}");
+                dataUpdate(mainContext);
+                setState(() {
+
+                });
               },
-              iconSize: 16,
+              iconSize: 20,
               icon: const Icon(Icons.keyboard_arrow_right),
               style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
+              tooltip: "Next",
               padding: EdgeInsets.zero,
             )),
         const SizedBox(
@@ -1337,6 +1539,10 @@ class _TableViewState extends State<TableView> {
             itemBuilder: (context) => [PopupMenuItem(onTap: () async {}, child: const Text("Export"))])
       ],
     );
+  }
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
 

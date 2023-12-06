@@ -45,7 +45,7 @@ class _RowCellState extends State<RowCell> {
       case "text" : return buildContainer(child: widget.selectedCell == widget.index && widget.message.rows[widget.index].row[widget.subIndex].writeEnabled
           ? buildTextFormField(context)
           : Text(
-        _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,softWrap: true,overflow: TextOverflow.ellipsis,
+        widget.message.rows[widget.index].row[widget.subIndex].value.toString().isEmpty ? StringConstants.notAvailable : widget.message.rows[widget.index].row[widget.subIndex].value.toString(),softWrap: true,overflow: TextOverflow.ellipsis,
         style: TextStyle(
             color: GlobalMethods.getColor(
                 widget.message.rows[widget.index].row[widget.subIndex].cellTextColour),
@@ -314,92 +314,92 @@ class _RowCellState extends State<RowCell> {
     }
   }
 
-  ValueListenableBuilder buildTextFormField(BuildContext context) {
-    return ValueListenableBuilder<String>(
-        valueListenable: _valueNotifier,
-        builder: (context, snapshot,w) {
-        return TextFormField(
-          keyboardType: TextInputType.multiline,
-          controller: TextEditingController(text: snapshot),
-            onChanged: (val) {
-              for (var element in widget.message.update!.identifiers) {
-                if(element.mandatory == true) {
-                  for(var x in widget.message.rows[widget.index].row) {
-                    if(x.key == element.fieldNameInTable) {
-                      widget.body[element.fieldNameInActionApi] = x.value ?? "";
+  TextFormField buildTextFormField(BuildContext context) {
+    TextEditingController textEditingController = TextEditingController(text: _valueNotifier.value);
+    return TextFormField(
+      keyboardType: TextInputType.multiline,
+      controller: textEditingController,
+      maxLines: 2,
+      onChanged: (val) {
+        for (var element in widget.message.update!.identifiers) {
+          if(element.mandatory == true) {
+            for(var x in widget.message.rows[widget.index].row) {
+              if(x.key == element.fieldNameInTable) {
+                widget.body[element.fieldNameInActionApi] = x.value ?? "";
+              }
+            }
+          }
+          if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
+            widget.body[element.fieldNameInActionApi] = val;
+            _valueNotifier.value = val;
+            widget.message.rows[widget.index].row[widget.subIndex].value = val;
+          }
+        }
+        print("body ${widget.body}");
+      },
+      style: TextStyle(
+          fontSize: 14,
+          color: GlobalMethods.getColor(widget.message.rows[widget.index].row[widget.subIndex].cellTextColour)),
+      decoration: InputDecoration(
+          hintText: "Write Here",
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+              borderRadius: BorderRadius.zero),
+          enabledBorder: OutlineInputBorder(
+              borderSide:
+              BorderSide(color: Colors.grey.withOpacity(.4)),
+              borderRadius: BorderRadius.zero),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+          suffixIcon: InkWell(onTap: (){
+            showDialog(context: context, builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              content: TextFormField(
+                keyboardType: TextInputType.multiline,
+                controller: textEditingController,
+                onChanged: (val){
+                  // textEditingController.text = val;
+                  for (var element in widget.message.update!.identifiers) {
+                    if(element.mandatory == true) {
+                      for(var x in widget.message.rows[widget.index].row) {
+                        if(x.key == element.fieldNameInTable) {
+                          widget.body[element.fieldNameInActionApi] = x.value ?? "";
+                        }
+                      }
+                    }
+                    if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
+                      widget.body[element.fieldNameInActionApi] = val;
+                      widget.message.rows[widget.index].row[widget.subIndex].value = val;
                     }
                   }
-                }
-                if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
-                  widget.body[element.fieldNameInActionApi] = val;
-                  _valueNotifier.value = val;
-                }
-              }
-              print("body ${widget.body}");
-            },
-            style: TextStyle(
-                fontSize: 14,
-                color: GlobalMethods.getColor(widget.message.rows[widget.index].row[widget.subIndex].cellTextColour)),
-            decoration: InputDecoration(
-                hintText: "Write Here",
-                focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                    borderRadius: BorderRadius.zero),
-                enabledBorder: OutlineInputBorder(
-                    borderSide:
-                    BorderSide(color: Colors.grey.withOpacity(.4)),
-                    borderRadius: BorderRadius.zero),
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                suffixIcon: InkWell(onTap: (){
-                  showDialog(context: context, builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    content: TextFormField(
-                      controller: TextEditingController(text: snapshot),
-                      onChanged: (val){
-                        for (var element in widget.message.update!.identifiers) {
-                          if(element.mandatory == true) {
-                            for(var x in widget.message.rows[widget.index].row) {
-                              if(x.key == element.fieldNameInTable) {
-                                widget.body[element.fieldNameInActionApi] = x.value ?? "";
-                              }
-                            }
-                          }
-                          if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
-                            widget.body[element.fieldNameInActionApi] = val;
-                            _valueNotifier.value = val;
-                          }
-                        }
-                        print("body ${widget.body}");
-                      },
-                      decoration: InputDecoration(
-                          focusedBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                              borderRadius: BorderRadius.zero),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide:
-                              BorderSide(color: Colors.grey.withOpacity(.4)),
-                              borderRadius: BorderRadius.zero)
-                      ),
-                      maxLines: 5,
+                  print("body ${widget.body}");
+                },
+                decoration: InputDecoration(
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.zero),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: Colors.grey.withOpacity(.4)),
+                        borderRadius: BorderRadius.zero)
+                ),
+                maxLines: 5,
+              ),
+              actionsPadding: EdgeInsets.fromLTRB(15, 0, 15, 15),
+              contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 15),
+              actions: [
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white
                     ),
-                    actionsPadding: EdgeInsets.fromLTRB(15, 0, 15, 15),
-                    contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-                    actions: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white
-                        ),
-                          onPressed: (){
-                            Navigator.pop(context);
-                      }, child: const Text("Done",style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                  ));
-                },child: const Icon(Icons.edit_note_rounded),)
-            ),
-          );
-      }
+                    onPressed: (){
+                      Navigator.pop(context);
+                    }, child: const Text("Done",style: TextStyle(fontWeight: FontWeight.bold))),
+              ],
+            ));
+          },child: const Icon(Icons.edit_note_rounded),)
+      ),
     );
   }
 
