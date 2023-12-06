@@ -1,6 +1,7 @@
 library generic_ledger;
 import 'dart:convert';
 
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -145,31 +146,32 @@ class _TableViewState extends State<TableView> {
     if(widget.params!.isNotEmpty && tableHeader.value != null && reload && mounted) {
       reload = false;
       filters.value.clear();
-      print(widget.params);
+      JWT jwtDecoded = JWT.decode(widget.params!["data"]);
+      localParams = jwtDecoded.payload;
       for (var element in tableList) {
-        if(element.tableName.contains(widget.params!["tableName"])) {
+        if(element.tableName.contains(localParams["tableName"])) {
           tableHeader.value = element;
-          print("selected2222 ${element.tableName}");
-          print(tableHeader.value!.tableName);
         }
       }
-      Map<String, dynamic> params = {"tableName" : widget.params!["tableName"]};
-      if(widget.params!["filters"] != null) {
+      Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
+      if(localParams["filters"] != null) {
         List<List<String>> paramFilters = [];
-        for(List aa in jsonDecode(widget.params!["filters"])){
+        for(List aa in jsonDecode(localParams["filters"])){
           final subFilter = List<String>.from(aa);
           paramFilters.add(subFilter);
         }
         filters.value.addAll(paramFilters);
         params["filters"] = jsonEncode(filters.value);
       }
-      if(widget.params!["sortBy"] != null) {
-        params["sortBy"] = widget.params!["sortBy"];
-        sortByWithOrder.value = widget.params!["sortBy"];
+      if(localParams["sortBy"] != null) {
+        params["sortBy"] = localParams["sortBy"];
+        sortByWithOrder.value = localParams["sortBy"];
       }
-      rowsPerPage = int.parse(widget.params!["rowsPerPage"]);
+      rowsPerPage = int.parse(localParams["rowsPerPage"]);
       params["rowsPerPage"] = rowsPerPage.toString();
-      mainContext.goNamed(basePath,queryParameters: params);
+      // final jwt = JWT(params);
+      // final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
+      // mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
       rowHeight.value.clear();
       mainContext.read<TableBodyBloc>().add(
           FetchTableRowDataEvent(
@@ -529,7 +531,11 @@ class _TableViewState extends State<TableView> {
     }
     params["rowsPerPage"] = rowsPerPage.toString();
     // print("params $params");
-    mainContext.goNamed(basePath,queryParameters: params);
+    final jwt = JWT(params);
+
+    final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
+    // print("token $signedJwt");
+    mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
     mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
         baseUrl: tableHeader.value!.actionApi,
         filters: filters.value,
