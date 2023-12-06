@@ -1,5 +1,8 @@
 library generic_ledger;
+import 'dart:convert';
+
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:generic_ledger/generic_table/generic_model/column_meta.dart';
@@ -17,7 +20,7 @@ import 'generic_table/table_header/bloc/bloc/table_bloc.dart';
 import 'generic_table/table_header/models/generic_table_model.dart';
 
 String basePath = "";
-
+bool reload = true;
 
 class GenericTable extends StatefulWidget {
   const GenericTable({super.key,required this.basPath,this.tableName});
@@ -106,6 +109,7 @@ class _TableViewState extends State<TableView> {
     for (int x = 0; x < scrollList.length; x++) {
       scrollList[x] = _controllerGroup.addAndGet();
     }
+    print("init state");
     super.initState();
     context.read<TableBloc>().add(FetchTableList());
   }
@@ -138,8 +142,78 @@ class _TableViewState extends State<TableView> {
 
   @override
   Widget build(BuildContext mainContext) {
-    if(localParams.isEmpty) {
-      localParams = widget.params!;
+    if(widget.params!.isNotEmpty && tableHeader.value != null && reload && mounted) {
+      reload = false;
+      filters.value.clear();
+      print(widget.params);
+      for (var element in tableList) {
+        if(element.tableName.contains(widget.params!["tableName"])) {
+          tableHeader.value = element;
+          print("selected2222 ${element.tableName}");
+          print(tableHeader.value!.tableName);
+        }
+      }
+      Map<String, dynamic> params = {"tableName" : widget.params!["tableName"]};
+      if(widget.params!["filters"] != null) {
+        List<List<String>> paramFilters = [];
+        for(List aa in jsonDecode(widget.params!["filters"])){
+          final subFilter = List<String>.from(aa);
+          paramFilters.add(subFilter);
+        }
+        filters.value.addAll(paramFilters);
+        params["filters"] = jsonEncode(filters.value);
+      }
+      if(widget.params!["sortBy"] != null) {
+        params["sortBy"] = widget.params!["sortBy"];
+        sortByWithOrder.value = widget.params!["sortBy"];
+      }
+      rowsPerPage = int.parse(widget.params!["rowsPerPage"]);
+      params["rowsPerPage"] = rowsPerPage.toString();
+      mainContext.goNamed(basePath,queryParameters: params);
+      rowHeight.value.clear();
+      mainContext.read<TableBodyBloc>().add(
+          FetchTableRowDataEvent(
+              baseUrl: tableHeader.value!.actionApi,
+              length: rowsPerPage,
+              filters: filters.value,
+              sortBy: sortByWithOrder.value
+          ));
+      for(int y = 0; y < rowsPerPage; y++) {
+        rowHeight.value.add(40);
+      }
+      sortList.clear();
+      validFilters.clear();
+      // filters.value.clear();
+      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+      controllersList = {};
+      columnMeta = [];
+      for (var x in tableHeader.value!.data.columns) {
+        controllersList[x.key] = TextEditingController();
+        if (x.sort.sortEnabled) {
+          sortList.add({x.key: x.displayName});
+        }
+        if (x.filterData.supportedFilters.isNotEmpty) {
+          validFilters[x.key] = x;
+        }
+      }
+      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
+          width: tableHeader.value!.data.columns[index].cellWidth,
+          isFreezed: false,
+          isHover: false,
+          isSelected: false,
+          sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
+      ));
+      // if(tableHeader.value!.actions != null) {
+      columnMeta.insert(0,ColumnMeta(
+          width: 150,
+          isFreezed: false,
+          isHover: false,
+          isSelected: false,
+          sortEnabled: false
+      ));
+      // }
+      cellMaxWidth = List.filled(columnMeta.length, 0.0);
+      FocusManager.instance.primaryFocus!.unfocus();
     }
     return BlocListener<TableBloc, TableStates>(
       listener: (context, state) {
@@ -448,7 +522,7 @@ class _TableViewState extends State<TableView> {
   void dataUpdate(BuildContext mainContext) {
     Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName};
     if(filters.value.isNotEmpty) {
-      params["filters"] = filters.value.toString();
+      params["filters"] = jsonEncode(filters.value);
     }
     if(sortByWithOrder.value.isNotEmpty) {
       params["sortBy"] = sortByWithOrder.value;
@@ -815,74 +889,7 @@ class _TableViewState extends State<TableView> {
   }
   List<String> lastValue = [];
   Row header(TableHeader? snapshot, BuildContext mainContext) {
-    // if(widget.params != null && !mapEquals(localParams, widget.params)) {
-    //   localParams = widget.params!;
-    //   if(tableHeader.value!.tableName != widget.params!["tableName"]){
-    //     tableHeader.value = null;
-    //   }
-    //   for (var element in tableList) {
-    //     if(element.tableName.contains(widget.params!["tableName"]) && tableHeader.value == null) {
-    //       tableHeader.value = element;
-    //       print("selected2222 ${element.tableName}");
-    //       print(tableHeader.value!.tableName);
-    //     }
-    //   }
-    //   Map<String, dynamic> params = {"tableName" : widget.params!["tableName"]};
-    //   if(widget.params!["filters"] != null) {
-    //     List<List<String>> paramFilters = [];
-    //     params["filters"] = widget.params!["filters"].split(",");
-    //     for(var x in widget.params!["filters"].split(",")) {
-    //       paramFilters.add(x.split(","));
-    //     }
-    //     filters.value = paramFilters;
-    //   }
-    //   if(widget.params!["sortBy"] != null) {
-    //     params["sortBy"] = widget.params!["sortBy"];
-    //     sortByWithOrder.value = widget.params!["sortBy"];
-    //   }
-    //   params["rowsPerPage"] = rowsPerPage.toString();
-    //   print("+++++ $params");
-    //   print("===== ${sortByWithOrder.value}");
-    //   mainContext.goNamed(basePath,queryParameters: params);
-    //   rowsPerPage = tableHeader.value!.rowsPerPage;
-    //   rowHeight.value.clear();
-    //   mainContext.read<TableBodyBloc>().add(
-    //       FetchTableRowDataEvent(
-    //           baseUrl: tableHeader.value!.actionApi,
-    //           length: rowsPerPage,
-    //           filters: filters.value,
-    //           sortBy: sortByWithOrder.value
-    //       ));
-    //   for(int y = 0; y < rowsPerPage; y++) {
-    //     rowHeight.value.add(40);
-    //   }
-    //   // sortList.clear();
-    //   // validFilters.clear();
-    //   // filters.value.clear();
-    //   // sortByWithOrder.value = "";
-    //   refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-    //   if(columnMeta.length != (tableHeader.value!.data.columns.length + (tableHeader.value!.actions != null ? 1 : 0))){
-    //     print("updating col");
-    //     print(columnMeta.length);
-    //     print(tableHeader.value!.data.columns.length);
-    //     controllersList = {};
-    //     columnMeta = [];
-    //     for (var x in tableHeader.value!.data.columns) {
-    //       controllersList[x.key] = TextEditingController();
-    //       if (x.sort.sortEnabled) {
-    //         sortList.add({x.key: x.displayName});
-    //       }
-    //       if (x.filterData.supportedFilters.isNotEmpty) {
-    //         validFilters[x.key] = x;
-    //       }
-    //     }
-    //     columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(tableHeader.value!.data.columns[index].cellWidth, tableHeader.value!.data.columns[index].hidden,false,false));
-    //     if(tableHeader.value!.actions != null) {
-    //       columnMeta.add(ColumnMeta(150, false,false,false));
-    //     }
-    //     cellMaxWidth = List.filled(columnMeta.length, 0.0);
-    //   }
-    // }
+
     return Row(
       children: [
         Container(
