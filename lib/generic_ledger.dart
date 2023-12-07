@@ -143,80 +143,84 @@ class _TableViewState extends State<TableView> {
 
   @override
   Widget build(BuildContext mainContext) {
-    if(widget.params!.isNotEmpty && tableHeader.value != null && reload && mounted) {
-      reload = false;
-      filters.value.clear();
-      JWT jwtDecoded = JWT.decode(widget.params!["data"]);
-      localParams = jwtDecoded.payload;
-      for (var element in tableList) {
-        if(element.tableName.contains(localParams["tableName"])) {
-          tableHeader.value = element;
-        }
-      }
-      Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
-      if(localParams["filters"] != null) {
-        List<List<String>> paramFilters = [];
-        for(List aa in jsonDecode(localParams["filters"])){
-          final subFilter = List<String>.from(aa);
-          paramFilters.add(subFilter);
-        }
-        filters.value.addAll(paramFilters);
-        params["filters"] = jsonEncode(filters.value);
-      }
-      if(localParams["sortBy"] != null) {
-        params["sortBy"] = localParams["sortBy"];
-        sortByWithOrder.value = localParams["sortBy"];
-      }
-      rowsPerPage = int.parse(localParams["rowsPerPage"]);
-      params["rowsPerPage"] = rowsPerPage.toString();
-      // final jwt = JWT(params);
-      // final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
-      // mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
-      rowHeight.value.clear();
-      mainContext.read<TableBodyBloc>().add(
-          FetchTableRowDataEvent(
-              baseUrl: tableHeader.value!.actionApi,
-              length: rowsPerPage,
-              filters: filters.value,
-              sortBy: sortByWithOrder.value
-          ));
-      for(int y = 0; y < rowsPerPage; y++) {
-        rowHeight.value.add(40);
-      }
-      sortList.clear();
-      validFilters.clear();
-      // filters.value.clear();
-      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-      controllersList = {};
-      columnMeta = [];
-      for (var x in tableHeader.value!.data.columns) {
-        controllersList[x.key] = TextEditingController();
-        if (x.sort.sortEnabled) {
-          sortList.add({x.key: x.displayName});
-        }
-        if (x.filterData.supportedFilters.isNotEmpty) {
-          validFilters[x.key] = x;
-        }
-      }
-      columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
-          width: tableHeader.value!.data.columns[index].cellWidth,
-          isFreezed: false,
-          isHover: false,
-          isSelected: false,
-          sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
-      ));
-      // if(tableHeader.value!.actions != null) {
-      columnMeta.insert(0,ColumnMeta(
-          width: 150,
-          isFreezed: false,
-          isHover: false,
-          isSelected: false,
-          sortEnabled: false
-      ));
-      // }
-      cellMaxWidth = List.filled(columnMeta.length, 0.0);
-      FocusManager.instance.primaryFocus!.unfocus();
-    }
+    print("pre entering");
+    // if(widget.params!.isNotEmpty && tableHeader.value != null && reload && mounted) {
+    //   print("entering");
+    //   reload = false;
+    //   filters.value.clear();
+    //   JWT jwtDecoded = JWT.decode(widget.params!["data"]);
+    //   localParams = jwtDecoded.payload;
+    //   for (var element in tableList) {
+    //     print("chedling");
+    //     if(element.tableName.contains(localParams["tableName"])) {
+    //       print("found");
+    //       tableHeader.value = element;
+    //     }
+    //   }
+    //   Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
+    //   if(localParams["filters"] != null) {
+    //     List<List<String>> paramFilters = [];
+    //     for(List aa in jsonDecode(localParams["filters"])){
+    //       final subFilter = List<String>.from(aa);
+    //       paramFilters.add(subFilter);
+    //     }
+    //     filters.value.addAll(paramFilters);
+    //     params["filters"] = jsonEncode(filters.value);
+    //   }
+    //   if(localParams["sortBy"] != null) {
+    //     params["sortBy"] = localParams["sortBy"];
+    //     sortByWithOrder.value = localParams["sortBy"];
+    //   }
+    //   rowsPerPage = int.parse(localParams["rowsPerPage"]);
+    //   params["rowsPerPage"] = rowsPerPage.toString();
+    //   // final jwt = JWT(params);
+    //   // final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
+    //   // mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
+    //   rowHeight.value.clear();
+    //   mainContext.read<TableBodyBloc>().add(
+    //       FetchTableRowDataEvent(
+    //           baseUrl: tableHeader.value!.actionApi,
+    //           length: rowsPerPage,
+    //           filters: filters.value,
+    //           sortBy: sortByWithOrder.value
+    //       ));
+    //   for(int y = 0; y < rowsPerPage; y++) {
+    //     rowHeight.value.add(40);
+    //   }
+    //   sortList.clear();
+    //   validFilters.clear();
+    //   // filters.value.clear();
+    //   refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+    //   controllersList = {};
+    //   columnMeta = [];
+    //   for (var x in tableHeader.value!.data.columns) {
+    //     controllersList[x.key] = TextEditingController();
+    //     if (x.sort.sortEnabled) {
+    //       sortList.add({x.key: x.displayName});
+    //     }
+    //     if (x.filterData.supportedFilters.isNotEmpty) {
+    //       validFilters[x.key] = x;
+    //     }
+    //   }
+    //   columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
+    //       width: tableHeader.value!.data.columns[index].cellWidth,
+    //       isFreezed: false,
+    //       isHover: false,
+    //       isSelected: false,
+    //       sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
+    //   ));
+    //   // if(tableHeader.value!.actions != null) {
+    //   columnMeta.insert(0,ColumnMeta(
+    //       width: 150,
+    //       isFreezed: false,
+    //       isHover: false,
+    //       isSelected: false,
+    //       sortEnabled: false
+    //   ));
+    //   // }
+    //   cellMaxWidth = List.filled(columnMeta.length, 0.0);
+    //   FocusManager.instance.primaryFocus!.unfocus();
+    // }
     return BlocListener<TableBloc, TableStates>(
       listener: (context, state) {
         if(state is TableUpdateState) {
@@ -385,7 +389,7 @@ class _TableViewState extends State<TableView> {
                                                   // width: columnMeta[index].width,
                                                   decoration: BoxDecoration(
                                                       color:  const Color(0xFFF2F2F2),
-                                                      border: Border(bottom: BorderSide(color: Colors.grey.shade300))
+                                                      border: Border(bottom: BorderSide(color: Colors.grey.shade300),right: BorderSide(color: Colors.grey.shade300))
                                                   ),
                                                   child: row[index].action != null && row[index].action!.isNotEmpty ? Center(
                                                     child: ListView.builder(
@@ -559,7 +563,14 @@ class _TableViewState extends State<TableView> {
             return SliverPersistentHeader(
               delegate: Header(
                   extent: columnMeta[x].width,
-                  child: x == 0 ? Container(width: columnMeta[x].width,height: 40,color: Colors.white,) :  FilterCell(
+                  child: x == 0 ? Container(width: columnMeta[x].width,height: 40,decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      right: BorderSide(color: Colors.grey.withOpacity(.3)),
+                      top: BorderSide(color: Colors.grey.withOpacity(.3)),
+                      bottom: BorderSide(color: Colors.grey.withOpacity(.3)),
+                    ),
+                  ),) :  FilterCell(
                     columnSize: columnMeta[x].width,
                     controller: controllersList[tableHeader.value!.data.columns[x-1].key]!,
                     tableHeader: tableHeader,
@@ -1254,7 +1265,86 @@ class _TableViewState extends State<TableView> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: BlocConsumer<TableBloc, TableStates>(
                 listener: (context, state) {
-                  if(state is TableLoadedState && widget.tableName != null) {
+                  if(state is TableLoadedState && widget.params!.isNotEmpty) {
+                    print("entering");
+                    reload = false;
+                    filters.value.clear();
+                    JWT jwtDecoded = JWT.decode(widget.params!["data"]);
+                    localParams = jwtDecoded.payload;
+                    for (var element in state.table.message.tables) {
+                      // print("chedling");
+                      if(element.tableName.contains(localParams["tableName"])) {
+                        // print("found");
+                        tableHeader.value = element;
+                      }
+                    }
+                    Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
+                    if(localParams["filters"] != null) {
+                      List<List<String>> paramFilters = [];
+                      for(List aa in jsonDecode(localParams["filters"])){
+                        final subFilter = List<String>.from(aa);
+                        paramFilters.add(subFilter);
+                      }
+                      filters.value.addAll(paramFilters);
+                      params["filters"] = jsonEncode(filters.value);
+                    }
+                    if(localParams["sortBy"] != null) {
+                      params["sortBy"] = localParams["sortBy"];
+                      sortByWithOrder.value = localParams["sortBy"];
+                    } else {
+                      sortByWithOrder.value = tableHeader.value!.defaultSort;
+                    }
+                    rowsPerPage = int.parse(localParams["rowsPerPage"]);
+                    params["rowsPerPage"] = rowsPerPage.toString();
+                    // final jwt = JWT(params);
+                    // final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
+                    // mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
+                    rowHeight.value.clear();
+                    mainContext.read<TableBodyBloc>().add(
+                        FetchTableRowDataEvent(
+                            baseUrl: tableHeader.value!.actionApi,
+                            length: rowsPerPage,
+                            filters: filters.value,
+                            sortBy: sortByWithOrder.value
+                        ));
+                    for(int y = 0; y < rowsPerPage; y++) {
+                      rowHeight.value.add(40);
+                    }
+                    sortList.clear();
+                    validFilters.clear();
+                    // filters.value.clear();
+                    refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                    controllersList = {};
+                    columnMeta = [];
+                    for (var x in tableHeader.value!.data.columns) {
+                      controllersList[x.key] = TextEditingController();
+                      if (x.sort.sortEnabled) {
+                        sortList.add({x.key: x.displayName});
+                      }
+                      if (x.filterData.supportedFilters.isNotEmpty) {
+                        validFilters[x.key] = x;
+                      }
+                    }
+                    columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
+                        width: tableHeader.value!.data.columns[index].cellWidth,
+                        isFreezed: false,
+                        isHover: false,
+                        isSelected: false,
+                        sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
+                    ));
+                    // if(tableHeader.value!.actions != null) {
+                    columnMeta.insert(0,ColumnMeta(
+                        width: 150,
+                        isFreezed: false,
+                        isHover: false,
+                        isSelected: false,
+                        sortEnabled: false
+                    ));
+                    // }
+                    cellMaxWidth = List.filled(columnMeta.length, 0.0);
+                    FocusManager.instance.primaryFocus!.unfocus();
+                  }
+                  if(state is TableLoadedState && widget.tableName != null && widget.params!.isEmpty) {
                     tableHeader.value = null;
                     for (var element in state.table.message.tables) {
                       if(element.tableName.contains(widget.tableName!)) {
@@ -1307,33 +1397,40 @@ class _TableViewState extends State<TableView> {
                 },
                 builder: (context, state) {
                   return Autocomplete(
-                    fieldViewBuilder: (context, textEditingController, focus, onSubmit) => TextFormField(
-                      cursorHeight: 16,
-                      enabled: widget.tableName == null,
-                      controller: textEditingController,
-                      focusNode: focus,
-                      onTap: (){
-                        textEditingController.clear();
-                      },
-                      onFieldSubmitted: (val) => onSubmit,
-                      decoration: InputDecoration(
-                        constraints: const BoxConstraints(maxHeight: 35),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: const BorderSide(color: Colors.transparent)),
-                        hintText: widget.tableName == null || tableHeader.value == null ? StringConstants.searchTable : tableHeader.value!.tableName,
-                        hoverColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: const BorderSide(color: Colors.transparent)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: const BorderSide(color: Colors.transparent)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
+                    fieldViewBuilder: (context, textEditingController, focus, onSubmit) {
+                      if(widget.params!.isNotEmpty) {
+                        JWT jwtDecoded = JWT.decode(widget.params!["data"]);
+                        localParams = jwtDecoded.payload;
+                        textEditingController.text = localParams["tableName"];
+                      }
+                      return TextFormField(
+                        cursorHeight: 16,
+                        enabled: widget.tableName == null,
+                        controller: textEditingController,
+                        focusNode: focus,
+                        onTap: (){
+                          textEditingController.clear();
+                        },
+                        onFieldSubmitted: (val) => onSubmit,
+                        decoration: InputDecoration(
+                          constraints: const BoxConstraints(maxHeight: 35),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: const BorderSide(color: Colors.transparent)),
+                          hintText: widget.tableName == null || tableHeader.value == null ? StringConstants.searchTable : tableHeader.value!.tableName,
+                          hoverColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: const BorderSide(color: Colors.transparent)),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: const BorderSide(color: Colors.transparent)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      );
+                    },
                     optionsBuilder: (val) {
                       final List<String> list = [];
                       if (state is TableLoadedState) {
@@ -1381,7 +1478,10 @@ class _TableViewState extends State<TableView> {
                                         }
                                       }
                                       Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName,"rowsPerPage" : rowsPerPage.toString()};
-                                      mainContext.goNamed(basePath,queryParameters: params);
+                                      final jwt = JWT(params);
+
+                                      final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
+                                      mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
                                       rowsPerPage = tableHeader.value!.rowsPerPage;
                                       rowHeight.value.clear();
                                       mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(baseUrl: tableHeader.value!.actionApi,length: rowsPerPage));

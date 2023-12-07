@@ -28,7 +28,10 @@ class FilterCell extends StatelessWidget {
           color: Colors.white,
           border: Border(
               right: BorderSide(color: Colors.grey.withOpacity(.3)),
-              top: BorderSide(color: Colors.grey.withOpacity(.3)))),
+              top: BorderSide(color: Colors.grey.withOpacity(.3)),
+              bottom: BorderSide(color: Colors.grey.withOpacity(.3)),
+          ),
+      ),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
