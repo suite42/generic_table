@@ -60,8 +60,7 @@ class _GenericTableState extends State<GenericTable> {
         BlocProvider(create: (context) => TableBodyBloc()),
         BlocProvider(create: (context) => PaymentBloc()),
       ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
+      child: Router(
           routeInformationParser: _router.routeInformationParser,
           routerDelegate: _router.routerDelegate,
         routeInformationProvider: _router.routeInformationProvider,
