@@ -44,7 +44,7 @@ class _GenericTableState extends State<GenericTable> {
             name: widget.basPath,
             path: widget.basPath.contains("/") ? widget.basPath : "/${widget.basPath}",
             builder: (context, state) {
-              // print("aaaa ${state.uri.queryParameters}");
+              print("aaaa ${state.uri.queryParameters}");
               return TableView(tableName: widget.tableName,params: state.uri.queryParameters,);
             },
           )
@@ -118,8 +118,6 @@ class _TableViewState extends State<TableView> {
 
   late List<TextEditingController> filterControllers = [];
 
-  List<int> usedControllers = [];
-
   List<Map<String, String>> sortList = [];
 
   ValueNotifier<List<List<String>>> filters = ValueNotifier([]);
@@ -142,84 +140,6 @@ class _TableViewState extends State<TableView> {
 
   @override
   Widget build(BuildContext mainContext) {
-    print("pre entering");
-    // if(widget.params!.isNotEmpty && tableHeader.value != null && reload && mounted) {
-    //   print("entering");
-    //   reload = false;
-    //   filters.value.clear();
-    //   JWT jwtDecoded = JWT.decode(widget.params!["data"]);
-    //   localParams = jwtDecoded.payload;
-    //   for (var element in tableList) {
-    //     print("chedling");
-    //     if(element.tableName.contains(localParams["tableName"])) {
-    //       print("found");
-    //       tableHeader.value = element;
-    //     }
-    //   }
-    //   Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
-    //   if(localParams["filters"] != null) {
-    //     List<List<String>> paramFilters = [];
-    //     for(List aa in jsonDecode(localParams["filters"])){
-    //       final subFilter = List<String>.from(aa);
-    //       paramFilters.add(subFilter);
-    //     }
-    //     filters.value.addAll(paramFilters);
-    //     params["filters"] = jsonEncode(filters.value);
-    //   }
-    //   if(localParams["sortBy"] != null) {
-    //     params["sortBy"] = localParams["sortBy"];
-    //     sortByWithOrder.value = localParams["sortBy"];
-    //   }
-    //   rowsPerPage = int.parse(localParams["rowsPerPage"]);
-    //   params["rowsPerPage"] = rowsPerPage.toString();
-    //   // final jwt = JWT(params);
-    //   // final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
-    //   // mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
-    //   rowHeight.value.clear();
-    //   mainContext.read<TableBodyBloc>().add(
-    //       FetchTableRowDataEvent(
-    //           baseUrl: tableHeader.value!.actionApi,
-    //           length: rowsPerPage,
-    //           filters: filters.value,
-    //           sortBy: sortByWithOrder.value
-    //       ));
-    //   for(int y = 0; y < rowsPerPage; y++) {
-    //     rowHeight.value.add(40);
-    //   }
-    //   sortList.clear();
-    //   validFilters.clear();
-    //   // filters.value.clear();
-    //   refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-    //   controllersList = {};
-    //   columnMeta = [];
-    //   for (var x in tableHeader.value!.data.columns) {
-    //     controllersList[x.key] = TextEditingController();
-    //     if (x.sort.sortEnabled) {
-    //       sortList.add({x.key: x.displayName});
-    //     }
-    //     if (x.filterData.supportedFilters.isNotEmpty) {
-    //       validFilters[x.key] = x;
-    //     }
-    //   }
-    //   columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
-    //       width: tableHeader.value!.data.columns[index].cellWidth,
-    //       isFreezed: false,
-    //       isHover: false,
-    //       isSelected: false,
-    //       sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
-    //   ));
-    //   // if(tableHeader.value!.actions != null) {
-    //   columnMeta.insert(0,ColumnMeta(
-    //       width: 150,
-    //       isFreezed: false,
-    //       isHover: false,
-    //       isSelected: false,
-    //       sortEnabled: false
-    //   ));
-    //   // }
-    //   cellMaxWidth = List.filled(columnMeta.length, 0.0);
-    //   FocusManager.instance.primaryFocus!.unfocus();
-    // }
     return BlocListener<TableBloc, TableStates>(
       listener: (context, state) {
         if(state is TableUpdateState) {
@@ -355,162 +275,161 @@ class _TableViewState extends State<TableView> {
                               selectedCell = null;
                               setState(() {});
                             },
-                        onDoubleTap: () {
-                            selectedCell = index;
-                            setState(() {});
-                        },
-                        child: ValueListenableBuilder(
-                            valueListenable: rowHeight,
-                            builder: (context, snapshot,wid) {
-                              return
-                                // CustomExpansionTile(
-                                // controlAffinity: ListTileControlAffinity.leading,
-                                // tilePadding: EdgeInsets.zero,
-                                // title:
-                                SizedBox(
-                                  height: snapshot[index],
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Expanded(
-                                        child: CustomScrollView(
-                                          controller: scrollList[index + 2],
-                                          shrinkWrap: true,
-                                          primary: false,
-                                          scrollDirection: Axis.horizontal,
-                                          slivers: List.generate(columnMeta.length, (x) {
-                                            return SliverPersistentHeader(
-                                              pinned: columnMeta[x].isFreezed,
-                                              delegate: Header(
-                                                extent: columnMeta[x].width,
-                                                child: x == 0 ? Container(
-                                                  padding: const EdgeInsets.only(left: 10),
-                                                  // width: columnMeta[index].width,
-                                                  decoration: BoxDecoration(
-                                                      color:  const Color(0xFFF2F2F2),
-                                                      border: Border(bottom: BorderSide(color: Colors.grey.shade300),right: BorderSide(color: Colors.grey.shade300))
-                                                  ),
-                                                  child: row[index].action != null && row[index].action!.isNotEmpty ? Center(
-                                                    child: ListView.builder(
-                                                        shrinkWrap: true,
-                                                        scrollDirection: Axis.horizontal,
-                                                        itemCount: row[index].action!.length,
-                                                        itemBuilder : (context,localIndex) => IconButton(
-                                                          onPressed: (){
-                                                            String? desc = "";
-                                                            Map<String, dynamic>  valData = {};
-                                                            for(var x in row[index].row) {
-                                                              for(int y = 0; y < tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"].length; y++) {
-                                                                if(x.key == tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_table"]){
-                                                                  valData[tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_action_api"]] = x.value;
+                            onDoubleTap: () {
+                                selectedCell = index;
+                                setState(() {});
+                            },
+                            child: ValueListenableBuilder(
+                                valueListenable: rowHeight,
+                                builder: (context, snapshot,wid) {
+                                  return
+                                    // CustomExpansionTile(
+                                    // controlAffinity: ListTileControlAffinity.leading,
+                                    // tilePadding: EdgeInsets.zero,
+                                    // title:
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          height: snapshot[index],
+                                          child: CustomScrollView(
+                                            controller: scrollList[index + 2],
+                                            shrinkWrap: true,
+                                            primary: false,
+                                            scrollDirection: Axis.horizontal,
+                                            slivers: List.generate(columnMeta.length, (x) {
+                                              return SliverPersistentHeader(
+                                                pinned: columnMeta[x].isFreezed,
+                                                delegate: Header(
+                                                  extent: columnMeta[x].width,
+                                                  child: x == 0 ? Container(
+                                                    padding: const EdgeInsets.only(left: 10),
+                                                    // width: columnMeta[index].width,
+                                                    decoration: BoxDecoration(
+                                                        color:  const Color(0xFFF2F2F2),
+                                                        border: Border(right: BorderSide(color: Colors.grey.shade300))
+                                                    ),
+                                                    child: row[index].action != null && row[index].action!.isNotEmpty ? Center(
+                                                      child: ListView.builder(
+                                                          shrinkWrap: true,
+                                                          scrollDirection: Axis.horizontal,
+                                                          itemCount: row[index].action!.length,
+                                                          itemBuilder : (context,localIndex) => IconButton(
+                                                            onPressed: (){
+                                                              String? desc = "";
+                                                              Map<String, dynamic>  valData = {};
+                                                              for(var x in row[index].row) {
+                                                                for(int y = 0; y < tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"].length; y++) {
+                                                                  if(x.key == tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_table"]){
+                                                                    valData[tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_action_api"]] = x.value;
+                                                                  }
                                                                 }
                                                               }
-                                                            }
-                                                            showDialog(context: context,barrierDismissible: false, builder: (context) {
-                                                              final formKey = GlobalKey<FormState>();
-                                                              return BlocProvider.value(
-                                                                value: BlocProvider.of<PaymentBloc>(mainContext),
-                                                                child: BlocConsumer<PaymentBloc,PaymentsState>(
-                                                                    listener: (context, state) {
-                                                                      if(state is PaymentsLoadedState) {
-                                                                        dataUpdate(mainContext);
-                                                                        Navigator.pop(context);
-                                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
-                                                                      } else if (state is PaymentsErrorState) {
-                                                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message),backgroundColor: Colors.red,));
-                                                                      }
-                                                                    },
-                                                                    builder: (context, state) {
-                                                                      final size = MediaQuery.of(context).size;
-                                                                      return AlertDialog(
-                                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                                                        title: Visibility(visible: state is! PaymentsLoadingState,child: Text(row[index].action![localIndex].action,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),)),
-                                                                        content: state is PaymentsLoadingState ? SizedBox(height: size.height / 3,child: const Center(child: CircularProgressIndicator())) : Form(
-                                                                            key: formKey,
-                                                                            child: SizedBox(
-                                                                              width: size.width / 3,
-                                                                              child: TextFormField(
-                                                                                initialValue: desc,
-                                                                                decoration: const InputDecoration(
-                                                                                  hintText: "Enter description",
-                                                                                  border: OutlineInputBorder(),
-                                                                                  focusedBorder: OutlineInputBorder(),
+                                                              showDialog(context: context,barrierDismissible: false, builder: (context) {
+                                                                final formKey = GlobalKey<FormState>();
+                                                                return BlocProvider.value(
+                                                                  value: BlocProvider.of<PaymentBloc>(mainContext),
+                                                                  child: BlocConsumer<PaymentBloc,PaymentsState>(
+                                                                      listener: (context, state) {
+                                                                        if(state is PaymentsLoadedState) {
+                                                                          dataUpdate(mainContext);
+                                                                          Navigator.pop(context);
+                                                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
+                                                                        } else if (state is PaymentsErrorState) {
+                                                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message),backgroundColor: Colors.red,));
+                                                                        }
+                                                                      },
+                                                                      builder: (context, state) {
+                                                                        final size = MediaQuery.of(context).size;
+                                                                        return AlertDialog(
+                                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                                          title: Visibility(visible: state is! PaymentsLoadingState,child: Text(row[index].action![localIndex].action,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),)),
+                                                                          content: state is PaymentsLoadingState ? SizedBox(height: size.height / 3,child: const Center(child: CircularProgressIndicator())) : Form(
+                                                                              key: formKey,
+                                                                              child: SizedBox(
+                                                                                width: size.width / 3,
+                                                                                child: TextFormField(
+                                                                                  initialValue: desc,
+                                                                                  decoration: const InputDecoration(
+                                                                                    hintText: "Enter description",
+                                                                                    border: OutlineInputBorder(),
+                                                                                    focusedBorder: OutlineInputBorder(),
+                                                                                  ),
+                                                                                  maxLines: 4,
+                                                                                  onSaved: (val){
+                                                                                    valData["description"] = val != null && val.isNotEmpty ? val : valData["description"];
+                                                                                    context.read<PaymentBloc>().add(PaymentsActionEvent(
+                                                                                        tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api"],
+                                                                                        {
+                                                                                          "data" : valData
+                                                                                        }
+                                                                                    ));
+                                                                                  },
+                                                                                  validator: row[index].action![localIndex].action == "Approve" ? null : (val) {
+                                                                                    if(val == null || val.isEmpty) {
+                                                                                      return "Please enter some description";
+                                                                                    } else if (val.length < 5) {
+                                                                                      "Please write more than one word";
+                                                                                    } else {
+                                                                                      return null;
+                                                                                    }
+                                                                                  },
                                                                                 ),
-                                                                                maxLines: 4,
-                                                                                onSaved: (val){
-                                                                                  valData["description"] = val != null && val.isNotEmpty ? val : valData["description"];
-                                                                                  context.read<PaymentBloc>().add(PaymentsActionEvent(
-                                                                                      tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api"],
-                                                                                      {
-                                                                                        "data" : valData
-                                                                                      }
-                                                                                  ));
-                                                                                },
-                                                                                validator: row[index].action![localIndex].action == "Approve" ? null : (val) {
-                                                                                  if(val == null || val.isEmpty) {
-                                                                                    return "Please enter some description";
-                                                                                  } else if (val.length < 5) {
-                                                                                    "Please write more than one word";
-                                                                                  } else {
-                                                                                    return null;
-                                                                                  }
-                                                                                },
-                                                                              ),
-                                                                            )),
-                                                                        actions: state is PaymentsLoadingState ? [] : [
-                                                                          ElevatedButton(onPressed: (){
-                                                                            if(formKey.currentState!.validate()) {
-                                                                              formKey.currentState!.save();
-                                                                            }
-                                                                          }, child: const Text("Submit",style: TextStyle(fontWeight: FontWeight.bold))),
-                                                                          OutlinedButton(onPressed: (){
-                                                                            Navigator.pop(context);
-                                                                          }, child: const Text("Cancel")),
-                                                                        ],
-                                                                      );
-                                                                    }
-                                                                ),
-                                                              );
-                                                            });
-                                                          },
-                                                          icon: Image.network(tableHeader.value!.actions![row[index].action![localIndex].action]!["image_url"],width: 20,height: 20,),
-                                                          tooltip: row[index].action![localIndex].action,
-                                                        )
-                                                    ),
-                                                  ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
-                                                ) : RowCell(
-                                                  tableHeader: tableHeader.value!,
-                                                  message: state.tableRowDataModel.message,
-                                                  activePage: activePage,
-                                                  body: updateBody,
-                                                  rowsPerPage: rowsPerPage,
-                                                  index: index,
-                                                  subIndex:x-1,
-                                                  selectedCell: selectedCell,
-                                                  cellSize: columnMeta[x].width,
-                                                  isSelected: colSelected != null && colSelected == x,
+                                                                              )),
+                                                                          actions: state is PaymentsLoadingState ? [] : [
+                                                                            ElevatedButton(onPressed: (){
+                                                                              if(formKey.currentState!.validate()) {
+                                                                                formKey.currentState!.save();
+                                                                              }
+                                                                            }, child: const Text("Submit",style: TextStyle(fontWeight: FontWeight.bold))),
+                                                                            OutlinedButton(onPressed: (){
+                                                                              Navigator.pop(context);
+                                                                            }, child: const Text("Cancel")),
+                                                                          ],
+                                                                        );
+                                                                      }
+                                                                  ),
+                                                                );
+                                                              });
+                                                            },
+                                                            icon: Image.network(tableHeader.value!.actions![row[index].action![localIndex].action]!["image_url"],width: 20,height: 20,),
+                                                            tooltip: row[index].action![localIndex].action,
+                                                          )
+                                                      ),
+                                                    ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
+                                                  ) : RowCell(
+                                                    tableHeader: tableHeader.value!,
+                                                    message: state.tableRowDataModel.message,
+                                                    activePage: activePage,
+                                                    body: updateBody,
+                                                    rowsPerPage: rowsPerPage,
+                                                    index: index,
+                                                    subIndex:x-1,
+                                                    selectedCell: selectedCell,
+                                                    cellSize: columnMeta[x].width,
+                                                    isSelected: colSelected != null && colSelected == x,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          })
+                                              );
+                                            })
+                                          ),
                                         ),
-                                      ),
-                                      MouseRegion(
-                                          cursor: SystemMouseCursors.resizeUpDown,
-                                          child: GestureDetector(
-                                              onVerticalDragUpdate: (val) {
-                                                setState(() {
-                                                  final temp = 40 + val.localPosition.dy;
-                                                  rowHeight.value[index] = temp < 30 ? 30 : temp;
-                                                });
-                                              },
-                                              child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
-                                    ],
-                                  ),
-                                );
-                              // );
-                            }
-                        ),
+                                        MouseRegion(
+                                            cursor: SystemMouseCursors.resizeUpDown,
+                                            child: GestureDetector(
+                                                onVerticalDragUpdate: (val) {
+                                                  setState(() {
+                                                    final temp = 40 + val.localPosition.dy;
+                                                    rowHeight.value[index] = temp < 30 ? 30 : temp;
+                                                  });
+                                                },
+                                                child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
+                                      ],
+                                    );
+                                  // );
+                                }
+                            ),
                       ),
                            ),
                 ),
@@ -537,8 +456,12 @@ class _TableViewState extends State<TableView> {
     final jwt = JWT(params);
 
     final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
-    // print("token $signedJwt");
-    mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
+    print("token $basePath");
+    if(widget.params!.isEmpty){
+      mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
+    } else {
+      Router.neglect(context, () {mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt}); });
+    }
     mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
         baseUrl: tableHeader.value!.actionApi,
         filters: filters.value,
@@ -572,9 +495,9 @@ class _TableViewState extends State<TableView> {
                   ),) :  FilterCell(
                     columnSize: columnMeta[x].width,
                     controller: controllersList[tableHeader.value!.data.columns[x-1].key]!,
-                    tableHeader: tableHeader,
+                    tableColumn: tableHeader.value!.data.columns[x-1],
                     onChanged: (val) {
-                      if ((val == "%25%25")|| val.isEmpty) {
+                      if ((val == "%25%25")|| val!.isEmpty) {
                         filters.value.remove(localList);
                         filterCount.remove(filterCount.length);
                         dataUpdate(mainContext);
@@ -582,18 +505,16 @@ class _TableViewState extends State<TableView> {
                       }
                     },
                     onSubmit: (val) {
+                      controllersList[tableHeader.value!.data.columns[x-1].key]!.text = val!;
                       tableHeader.value!.data.columns[x-1].filterData.defaultFilterType == "Like" ||
                           tableHeader.value!.data.columns[x-1].filterData.defaultFilterType ==
                               "Not Like"
                           ? val = "%25$val%25"
                           : val;
-                      if (!usedControllers.contains(x-1)) {
-                        usedControllers.add(x-1);
-                      }
                        localList = [
                         tableHeader.value!.data.columns[x-1].key,
                         tableHeader.value!.data.columns[x-1].filterData.defaultFilterType,
-                        val
+                        val!.encodeUrl()
                       ];
                       var xa = List.from(filters.value);
 
@@ -609,7 +530,6 @@ class _TableViewState extends State<TableView> {
                       }
                       dataUpdate(mainContext);
                     },
-                    index: x-1,
                   )),
               pinned: columnMeta[x].isFreezed,
             );
@@ -791,38 +711,44 @@ class _TableViewState extends State<TableView> {
                                                         style: const TextStyle(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis)),
                                                   ),
                                                   if((columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) && columnMeta[x].sortEnabled)
-                                                  tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0] ? IconButton(
-                                                      onPressed: () {
-                                                        final localFilters = List.from(filters.value);
-                                                        for(var val in localFilters) {
-                                                          filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
-                                                        }
-                                                        lastValue.clear();
-                                                    if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
+                                                  tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0] ? SizedBox(
+                                                    width: 25,
+                                                    child: IconButton(
+                                                        onPressed: () {
+                                                          final localFilters = List.from(filters.value);
+                                                          for(var val in localFilters) {
+                                                            filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                          }
+                                                          lastValue.clear();
+                                                      if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
+                                                        sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
+                                                      } else {
+                                                        sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.asc}";
+                                                      }
+                                                      dataUpdate(mainContext);
+                                                    }, icon: sortByWithOrder.value.split(" ")[1] == "ASC"
+                                                        ? const Icon(
+                                                      Icons.arrow_upward,
+                                                      size: 16,
+                                                    )
+                                                        : const Icon(
+                                                      Icons.arrow_downward,
+                                                      size: 16,
+                                                    )),
+                                                  ) : SizedBox(
+                                                    width: 25,
+                                                    child: IconButton(onPressed: (){
+                                                      final localFilters = List.from(filters.value);
+                                                      for(var val in localFilters) {
+                                                        filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                      }
+                                                      lastValue.clear();
                                                       sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
-                                                    } else {
-                                                      sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.asc}";
-                                                    }
-                                                    dataUpdate(mainContext);
-                                                  }, icon: sortByWithOrder.value.split(" ")[1] == "ASC"
-                                                      ? const Icon(
-                                                    Icons.arrow_upward,
-                                                    size: 16,
+                                                      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                                      dataUpdate(mainContext);
+                                                      setState(() {});
+                                                    }, icon: const Icon(Icons.swap_vert,size: 16,)),
                                                   )
-                                                      : const Icon(
-                                                    Icons.arrow_downward,
-                                                    size: 16,
-                                                  )) : IconButton(onPressed: (){
-                                                    final localFilters = List.from(filters.value);
-                                                    for(var val in localFilters) {
-                                                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
-                                                    }
-                                                    lastValue.clear();
-                                                    sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
-                                                    refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                                    dataUpdate(mainContext);
-                                                    setState(() {});
-                                                  }, icon: const Icon(Icons.swap_vert,size: 16,))
                                                 ],
                                               );
                                             })),
@@ -835,11 +761,11 @@ class _TableViewState extends State<TableView> {
                                   child: GestureDetector(
                                       onHorizontalDragUpdate: (val) {
                                         setState(() {
-                                          final temp = 150 + val.localPosition.dx;
-                                          columnMeta[x].width = temp < 50 ? 50 : temp;
+                                          final temp = columnMeta[x].fixedWidth + val.localPosition.dx;
+                                          columnMeta[x].width = temp < 75 ? 75 : temp;
                                         });
                                       },
-                                      child: Center(child: Container(color: Colors.grey.withOpacity(.3), width: 3,height: 40,)))),
+                                      child: Center(child: Container(color: Colors.grey.withOpacity(.3),width: 3,height: 40,)))),
                             ],
                           ),
                         ),
@@ -885,11 +811,13 @@ class _TableViewState extends State<TableView> {
                         InkWell(
                             onTap: () {
                               list[index].length == 1 ? sortByWithOrder.value = tableHeader.value!.defaultSort : filters.value.remove(list[index]);
-                              if (usedControllers.isNotEmpty) {
-                                usedControllers.removeAt(index);
-                              }
+                              print(list[index][0]);
+                              print(controllersList[list[index][0]]!.text);
                               controllersList[list[index][0]]!.clear();
                               dataUpdate(mainContext);
+                              setState(() {
+
+                              });
                               refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                             },
                             child: const Icon(
@@ -905,7 +833,6 @@ class _TableViewState extends State<TableView> {
   }
   List<String> lastValue = [];
   Row header(TableHeader? snapshot, BuildContext mainContext) {
-
     return Row(
       children: [
         Container(
@@ -1040,7 +967,37 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     SizedBox(
                                       width: 175,
-                                      child:
+                                      child: filters.value[index][1].toLowerCase() == "is" ? SizedBox(
+                                        height: 30,
+                                        child: DropdownButtonFormField<String>(
+                                          items: const [
+                                            DropdownMenuItem(value: "set",child: Text("Set"),),
+                                            DropdownMenuItem(value: "not set",child: Text("Not Set"),),
+                                          ],
+                                          value: filters.value[index][2].isEmpty ? null : filters.value[index][2],
+                                          isExpanded: true,
+                                          onChanged: (val) {
+                                            controllersList[filters.value[index][0]]!.text = val!;
+                                            filters.value[index][2] = val.encodeUrl();
+                                            refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                          },
+                                          decoration: InputDecoration(
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderSide: const BorderSide(color: Colors.transparent),
+                                                  borderRadius: BorderRadius.circular(5)),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderSide: const BorderSide(color: Colors.transparent),
+                                                  borderRadius: BorderRadius.circular(5)),
+                                              disabledBorder: OutlineInputBorder(
+                                                  borderSide: const BorderSide(color: Colors.transparent),
+                                                  borderRadius: BorderRadius.circular(5)),
+                                              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                                              filled: true,
+                                              hintStyle: const TextStyle(fontSize: 14),
+                                              hintText: "Select",
+                                              fillColor: Colors.grey.shade100),
+                                        ),
+                                      ) :
                                       // filters.value[index][1] == "Equals" ? DropdownButtonFormField(
                                       //   isDense: true,
                                       //   style: const TextStyle(overflow: TextOverflow.ellipsis),
@@ -1069,43 +1026,43 @@ class _TableViewState extends State<TableView> {
                                       //       filled: true,
                                       //       fillColor: Colors.grey.shade100),
                                       // ) :
-                                      TextFormField(
-                                        // controller: filterControllers[index],
-                                        initialValue: filters.value[index][2].isNotEmpty && (filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like")
-                                            ? filters.value[index][2].removePercentage() : filters.value[index][2],
-                                        cursorHeight: 15,
-                                        decoration: InputDecoration(
-                                            hintText: StringConstants.searchValue,
-                                            hintStyle: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade400,
-                                                fontWeight: FontWeight.normal),
-                                            constraints: const BoxConstraints(maxHeight: 30),
-                                            focusedBorder: OutlineInputBorder(
-                                                borderSide: const BorderSide(color: Colors.transparent),
-                                                borderRadius: BorderRadius.circular(6)),
-                                            enabledBorder: OutlineInputBorder(
-                                                borderSide: const BorderSide(color: Colors.transparent),
-                                                borderRadius: BorderRadius.circular(6)),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-                                            filled: true,
-                                            fillColor: Colors.grey.shade100),
-                                        validator: (val) => val!.isEmpty ? "Please enter value" : null,
-                                        onSaved: (val) {
+                                      FilterCell(
+                                        textFieldRadius: 5,
+                                        onlyTextField: true,
+                                        columnSize: 175,
+                                        controller: controllersList[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key :filters.value[index][0]]!,
+                                        onChanged: (val){
+                                              controllersList[filters.value[index][0]]!.text = val!;
+                                              filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
+                                                  ? val = "%25$val%25"
+                                                  : val;
+                                              filters.value[index][2] = val.encodeUrl();
+                                              refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                        },
+                                        tableColumn: validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!,
+                                        onSubmit: (val) {
                                           controllersList[filters.value[index][0]]!.text = val!;
                                           filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
                                               ? val = "%25$val%25"
                                               : val;
-                                          filters.value[index][2] = val;
-                                          // for (var element in filters.value) {
-                                          //   if (element.isNotEmpty  && element.first == localList.first) {
-                                          //     filters.value.remove(element);
-                                          //   }
-                                          // }
+                                          filters.value[index][2] = val.encodeUrl();
                                           refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                          // filters.value[index] = localList;
                                         },
-                                      ),
+                                      )
+                                      // TextFormField(
+                                      //   initialValue: filters.value[index][2].isNotEmpty && (filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like")
+                                      //       ? filters.value[index][2].removePercentage() : filters.value[index][2],
+                                      //   cursorHeight: 15,
+                                      //   validator: (val) => val!.isEmpty ? "Please enter value" : null,
+                                      //   onSaved: (val) {
+                                      //     controllersList[filters.value[index][0]]!.text = val!;
+                                      //     filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
+                                      //         ? val = "%25$val%25"
+                                      //         : val;
+                                      //     filters.value[index][2] = val.encodeUrl();
+                                      //     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                      //   },
+                                      // ),
                                     ),
                                     const SizedBox(
                                       width: 25,
@@ -1113,6 +1070,8 @@ class _TableViewState extends State<TableView> {
                                     InkWell(
                                         onTap: () {
                                           if (filters.value.isNotEmpty) {
+                                            print(filters.value[index][0]);
+                                            print(controllersList[filters.value[index][0]]!.text);
                                             if(controllersList[filters.value[index][0]] != null) {
                                               controllersList[filters.value[index][0]]!.clear();
                                             }
@@ -1265,15 +1224,11 @@ class _TableViewState extends State<TableView> {
             child: BlocConsumer<TableBloc, TableStates>(
                 listener: (context, state) {
                   if(state is TableLoadedState && widget.params!.isNotEmpty) {
-                    print("entering");
-                    reload = false;
                     filters.value.clear();
                     JWT jwtDecoded = JWT.decode(widget.params!["data"]);
                     localParams = jwtDecoded.payload;
                     for (var element in state.table.message.tables) {
-                      // print("chedling");
                       if(element.tableName.contains(localParams["tableName"])) {
-                        // print("found");
                         tableHeader.value = element;
                       }
                     }
@@ -1324,22 +1279,23 @@ class _TableViewState extends State<TableView> {
                         validFilters[x.key] = x;
                       }
                     }
+                    print("object 1${controllersList.keys}");
                     columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
                         width: tableHeader.value!.data.columns[index].cellWidth,
+                        fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                         isFreezed: false,
                         isHover: false,
                         isSelected: false,
                         sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
                     ));
-                    // if(tableHeader.value!.actions != null) {
                     columnMeta.insert(0,ColumnMeta(
                         width: 150,
+                        fixedWidth: 150,
                         isFreezed: false,
                         isHover: false,
                         isSelected: false,
                         sortEnabled: false
                     ));
-                    // }
                     cellMaxWidth = List.filled(columnMeta.length, 0.0);
                     FocusManager.instance.primaryFocus!.unfocus();
                   }
@@ -1372,22 +1328,23 @@ class _TableViewState extends State<TableView> {
                         validFilters[x.key] = x;
                       }
                     }
+                    print("object 2${controllersList.length}");
                     columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
                         width: tableHeader.value!.data.columns[index].cellWidth,
+                        fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                         isFreezed: false,
                         isHover: false,
                         isSelected: false,
                         sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
                     ));
-                    // if(tableHeader.value!.actions != null) {
                       columnMeta.insert(0,ColumnMeta(
                           width: 150.0,
+                          fixedWidth: 150.0,
                           isFreezed: false,
                           isHover: false,
                           isSelected: false,
                           sortEnabled: false
                       ));
-                    // }
                     cellMaxWidth = List.filled(columnMeta.length, 0.0);
                   }
                   else if(state is TableErrorState) {
@@ -1478,7 +1435,6 @@ class _TableViewState extends State<TableView> {
                                       }
                                       Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName,"rowsPerPage" : rowsPerPage.toString()};
                                       final jwt = JWT(params);
-
                                       final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
                                       mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
                                       rowsPerPage = tableHeader.value!.rowsPerPage;
@@ -1505,20 +1461,20 @@ class _TableViewState extends State<TableView> {
                                       }
                                       columnMeta = List.generate(tableHeader.value!.data.columns.length, (index) => ColumnMeta(
                                           width: tableHeader.value!.data.columns[index].cellWidth,
+                                          fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                                           isFreezed: false,
                                           isHover: false,
                                           isSelected: false,
                                           sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
                                       ));
-                                      // if(tableHeader.value!.actions != null) {
                                         columnMeta.insert(0,ColumnMeta(
                                             width: 150,
+                                            fixedWidth: 150,
                                             isFreezed: false,
                                             isHover: false,
                                             isSelected: false,
                                             sortEnabled: false
                                         ));
-                                      // }
                                       cellMaxWidth = List.filled(columnMeta.length, 0.0);
                                       FocusManager.instance.primaryFocus!.unfocus();
                                     },
@@ -1559,11 +1515,6 @@ class _TableViewState extends State<TableView> {
                   .toList(),
               onChanged: (val) {
                 rowHeight.value.clear();
-                // scrollList.clear();
-                // scrollList = List.generate(rowsPerPage+2, (index) => null);
-                // for (int x = 0; x < scrollList.length; x++) {
-                //   scrollList[x] = _controllerGroup.addAndGet();
-                // }
                 rowsPerPage = val!;
                 for(int y = 0; y < rowsPerPage; y++) {
                   rowHeight.value.add(40);

@@ -62,7 +62,6 @@ class TableHeader {
   });
 
   factory TableHeader.fromJson(Map<String, dynamic> json) {
-    print(json["table_name"]);
     return TableHeader(
       tableName: json["table_name"],
       perPageEntryOptions: List<int>.from(json["per_page_entry_options"].map((x) => x)),
@@ -149,12 +148,14 @@ class FilterData {
   List<String> supportedFilters;
   bool filterEnabled;
   dynamic autoSuggestLink;
+  String? autoSuggestKey;
 
   FilterData({
     required this.defaultFilterType,
     required this.supportedFilters,
     required this.filterEnabled,
     required this.autoSuggestLink,
+    this.autoSuggestKey,
   });
 
   factory FilterData.fromJson(Map<String, dynamic> json) => FilterData(
@@ -162,6 +163,7 @@ class FilterData {
     supportedFilters: List<String>.from(json["supported_filters"].map((x) => x)),
     filterEnabled: json["filter_enabled"],
     autoSuggestLink: json["auto_suggest_link"],
+    autoSuggestKey: json["auto_suggest_key"],
   );
 
   Map<String, dynamic> toJson() => {

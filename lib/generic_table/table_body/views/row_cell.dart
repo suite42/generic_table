@@ -45,7 +45,7 @@ class _RowCellState extends State<RowCell> {
       case "text" : return buildContainer(child: widget.selectedCell == widget.index && widget.message.rows[widget.index].row[widget.subIndex].writeEnabled
           ? buildTextFormField(context)
           : Text(
-        widget.message.rows[widget.index].row[widget.subIndex].value.toString().isEmpty ? StringConstants.notAvailable : widget.message.rows[widget.index].row[widget.subIndex].value.toString(),softWrap: true,overflow: TextOverflow.ellipsis,
+        widget.message.rows[widget.index].row[widget.subIndex].value == null || widget.message.rows[widget.index].row[widget.subIndex].value.toString().isEmpty ? StringConstants.notAvailable : widget.message.rows[widget.index].row[widget.subIndex].value.toString(),softWrap: true,overflow: TextOverflow.ellipsis,
         style: TextStyle(
             color: GlobalMethods.getColor(
                 widget.message.rows[widget.index].row[widget.subIndex].cellTextColour),
