@@ -13,12 +13,14 @@ import 'package:generic_ledger/utils/global_methods.dart';
 import 'package:generic_ledger/utils/string_constants.dart';
 import 'package:go_router/go_router.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
+import 'generic_table/filters/filter_model.dart';
 import 'generic_table/table_body/bloc/bloc/payment_bloc.dart';
 import 'generic_table/table_body/bloc/bloc/table_body_bloc.dart';
 import 'generic_table/table_body/views/filter_cell.dart';
 import 'generic_table/table_body/views/row_cell.dart';
 import 'generic_table/table_header/bloc/bloc/table_bloc.dart';
 import 'generic_table/table_header/models/generic_table_model.dart';
+import 'generic_table/widgets/sliver_header.dart';
 
 String basePath = "";
 bool reload = true;
@@ -121,6 +123,8 @@ class _TableViewState extends State<TableView> {
   List<Map<String, String>> sortList = [];
 
   ValueNotifier<List<List<String>>> filters = ValueNotifier([]);
+
+  final filterModel = FilterListModel(filterData: []);
 
   Map<String, TableColumn> validFilters = {};
 
@@ -445,8 +449,8 @@ class _TableViewState extends State<TableView> {
 
   void dataUpdate(BuildContext mainContext) {
     Map<String, dynamic> params = {"tableName" : tableHeader.value!.tableName};
-    if(filters.value.isNotEmpty) {
-      params["filters"] = jsonEncode(filters.value);
+    if(filterModel.filterData.isNotEmpty) {
+      params["filters"] = jsonEncode(filterModel.fullFiltersList());
     }
     if(sortByWithOrder.value.isNotEmpty) {
       params["sortBy"] = sortByWithOrder.value;
@@ -464,7 +468,7 @@ class _TableViewState extends State<TableView> {
     }
     mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
         baseUrl: tableHeader.value!.actionApi,
-        filters: filters.value,
+        filters: filterModel.filtersList(),
         sortBy: sortByWithOrder.value,
         length: rowsPerPage));
   }
@@ -481,7 +485,6 @@ class _TableViewState extends State<TableView> {
           primary: false,
           scrollDirection: Axis.horizontal,
           slivers: List.generate(columnMeta.length, (x) {
-            List<String> localList = [];
             return SliverPersistentHeader(
               delegate: Header(
                   extent: columnMeta[x].width,
@@ -498,7 +501,7 @@ class _TableViewState extends State<TableView> {
                     tableColumn: tableHeader.value!.data.columns[x-1],
                     onChanged: (val) {
                       if ((val == "%25%25")|| val!.isEmpty) {
-                        filters.value.remove(localList);
+                        filterModel.filterData.remove(columnMeta[x].localFilterData);
                         filterCount.remove(filterCount.length);
                         dataUpdate(mainContext);
                         setState(() {});
@@ -511,21 +514,22 @@ class _TableViewState extends State<TableView> {
                               "Not Like"
                           ? val = "%25$val%25"
                           : val;
-                       localList = [
-                        tableHeader.value!.data.columns[x-1].key,
-                        tableHeader.value!.data.columns[x-1].filterData.defaultFilterType,
-                        val!.encodeUrl()
-                      ];
-                      var xa = List.from(filters.value);
+                      columnMeta[x].localFilterData = Filter(
+                          key: tableHeader.value!.data.columns[x-1].key,
+                          name: tableHeader.value!.data.columns[x-1].displayName,
+                          filterType: tableHeader.value!.data.columns[x-1].filterData.defaultFilterType,
+                          value: val.encodeUrl()
+                      );
+                      var xa2 = List<Filter>.from(filterModel.filterData);
 
-                      for (var element in xa) {
-                        if (element.first == localList.first) {
-                          filters.value.remove(element);
+                      for (var element in xa2) {
+                        if (element.key == columnMeta[x].localFilterData.key) {
+                          filterModel.filterData.remove(element);
                         }
                       }
-                      filters.value.add(localList);
+                      filterModel.filterData.add(columnMeta[x].localFilterData);
                       if ((val == "%25%25")|| val.isEmpty) {
-                        filters.value.remove(localList);
+                        filterModel.filterData.remove(columnMeta[x].localFilterData);
                         filterCount.remove(filterCount.length);
                       }
                       dataUpdate(mainContext);
@@ -715,9 +719,9 @@ class _TableViewState extends State<TableView> {
                                                     width: 25,
                                                     child: IconButton(
                                                         onPressed: () {
-                                                          final localFilters = List.from(filters.value);
+                                                          final localFilters = List<Filter>.from(filterModel.filterData);
                                                           for(var val in localFilters) {
-                                                            filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                            filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
                                                           }
                                                           lastValue.clear();
                                                       if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
@@ -738,9 +742,9 @@ class _TableViewState extends State<TableView> {
                                                   ) : SizedBox(
                                                     width: 25,
                                                     child: IconButton(onPressed: (){
-                                                      final localFilters = List.from(filters.value);
+                                                      final localFilters = List<Filter>.from(filterModel.filterData);
                                                       for(var val in localFilters) {
-                                                        filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                        filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
                                                       }
                                                       lastValue.clear();
                                                       sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
@@ -782,12 +786,12 @@ class _TableViewState extends State<TableView> {
     return ValueListenableBuilder(
         valueListenable: refresher,
         builder: (context, snapshot, wid) {
-          final list = [
-            ...filters.value,
-            if (sortByWithOrder.value.isNotEmpty) [sortByWithOrder.value.split(" ")[0]]
+          final List<Filter> list = [
+            ...filterModel.filterData,
+            if (sortByWithOrder.value.isNotEmpty) Filter(key: "",name: "Sort By",filterType: "",value: sortByWithOrder.value.split(" ")[0])
           ];
           return Visibility(
-            visible: filters.value.isNotEmpty || sortByWithOrder.value.isNotEmpty,
+            visible: filterModel.filterData.isNotEmpty || sortByWithOrder.value.isNotEmpty,
             child: SizedBox(
               height: 45,
               width: double.infinity,
@@ -804,16 +808,14 @@ class _TableViewState extends State<TableView> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(list[index].length == 1
-                            ? "Sort By : ${list[index][0]}"
-                            : "${list[index][0]} - ${list[index][1].toLowerCase() == "like" || list[index][1].toLowerCase() == "not like" ? list[index][2].removePercentage() : list[index][2]}"),
+                        Text("${list[index].name} - ${list[index].filterType.toLowerCase() == "like" || list[index].filterType.toLowerCase() == "not like" ? list[index].value.removePercentage() : list[index].value}"),
                         const SizedBox(width: 3),
                         InkWell(
-                            onTap: () {
-                              list[index].length == 1 ? sortByWithOrder.value = tableHeader.value!.defaultSort : filters.value.remove(list[index]);
-                              print(list[index][0]);
-                              print(controllersList[list[index][0]]!.text);
-                              controllersList[list[index][0]]!.clear();
+                            onTap: list[index].name == "Sort By" ? null : () {
+                              filterModel.filterData.remove(list[index]);
+                              print(list[index].key);
+                              print(controllersList[list[index].key]!.text);
+                              controllersList[list[index].key]!.clear();
                               dataUpdate(mainContext);
                               setState(() {
 
@@ -831,6 +833,7 @@ class _TableViewState extends State<TableView> {
           );
         });
   }
+
   List<String> lastValue = [];
   Row header(TableHeader? snapshot, BuildContext mainContext) {
     return Row(
@@ -847,6 +850,17 @@ class _TableViewState extends State<TableView> {
         ),
         const VerticalDivider(),
         PopupMenuButton(
+          onCanceled: (){
+            if(filterModel.filterData.isNotEmpty){
+              for(var val in filterModel.filterData){
+                print("ggggggg");
+                if(val.value.isEmpty) {
+                  print("ffffffff");
+                  filterModel.filterData.remove(val);
+                }
+              }
+            }
+          },
             enabled: tableHeader.value != null,
             position: PopupMenuPosition.under,
             surfaceTintColor: Colors.white,
@@ -884,7 +898,12 @@ class _TableViewState extends State<TableView> {
                         Form(
                           key: formKey,
                           child: Column(
-                            children: List.generate(filters.value.length, (index) {
+                            children: List.generate(filterModel.filterData.length, (index) {
+                              if(filterModel.filterData[index].filterType.toLowerCase() == "like" || filterModel.filterData[index].filterType.toLowerCase() == "not like") {
+                                controllersList[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key :filterModel.filterData[index].key]!.text = filterModel.filterData[index].value.removePercentage();
+                              } else {
+                                controllersList[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key :filterModel.filterData[index].key]!.text = filterModel.filterData[index].value;
+                              }
                               Map<String, dynamic> applicableFilter = {};
                               List<String> localList = ["", "", ""];
                               for (var element in tableHeader.value!.data.columns) {
@@ -904,16 +923,18 @@ class _TableViewState extends State<TableView> {
                                       child: DropdownButtonFormField<String>(
                                         isDense: true,
                                         style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                        value: filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0],
+                                        value: filterModel.filterData[index].key.isEmpty ? "${tableHeader.value!.data.columns[index].key},${tableHeader.value!.data.columns[index].displayName}" : "${filterModel.filterData[index].key},${filterModel.filterData[index].name}",
                                         onChanged: tableHeader.value == null ? null : (val) {
-                                          filters.value[index][0] = val!;
+                                          filterModel.filterData[index].key = val!.split(",")[0];
+                                          filterModel.filterData[index].name = val.split(",")[1];
                                           setState(() {});
                                         },
                                         onSaved: (val) {
-                                          filters.value[index][0] = val!;
+                                          filterModel.filterData[index].key = val!.split(",")[0];
+                                          filterModel.filterData[index].name = val.split(",")[1];
                                         },
                                         isExpanded: true,
-                                        items: validFilters.keys.map((e) => DropdownMenuItem<String>(value: e, child: Text(validFilters[e]!.displayName))).toList(),
+                                        items: validFilters.keys.map((e) => DropdownMenuItem<String>(value: "$e,${validFilters[e]!.displayName}", child: Text(validFilters[e]!.displayName))).toList(),
                                         decoration: InputDecoration(
                                             hintStyle: TextStyle(
                                                 fontSize: 14,
@@ -939,16 +960,16 @@ class _TableViewState extends State<TableView> {
                                       child: DropdownButtonFormField<String>(
                                         isDense: true,
                                         style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                        value: filters.value[index][1].isEmpty ? validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!.filterData.defaultFilterType : filters.value[index][1],
+                                        value: filterModel.filterData[index].filterType.isEmpty ? validFilters[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key : filterModel.filterData[index].key]!.filterData.defaultFilterType : filterModel.filterData[index].filterType,
                                         onChanged: (val) {
-                                          filters.value[index][1] = val!;
+                                          filterModel.filterData[index].filterType = val!;
                                           setState((){});
                                         },
                                         onSaved: (val) {
-                                          filters.value[index][1] = val!;
+                                          filterModel.filterData[index].filterType = val!;
                                         },
                                         isExpanded: true,
-                                        items: validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!.filterData.supportedFilters.map<DropdownMenuItem<String>>((e) => DropdownMenuItem<String>(value: e, child: Text(e))).toList(),
+                                        items: validFilters[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key : filterModel.filterData[index].key]!.filterData.supportedFilters.map<DropdownMenuItem<String>>((e) => DropdownMenuItem<String>(value: e, child: Text(e))).toList(),
                                         decoration: InputDecoration(
                                             constraints: const BoxConstraints(maxHeight: 30),
                                             focusedBorder: OutlineInputBorder(
@@ -967,18 +988,18 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     SizedBox(
                                       width: 175,
-                                      child: filters.value[index][1].toLowerCase() == "is" ? SizedBox(
+                                      child: filterModel.filterData[index].filterType.toLowerCase() == "is" ? SizedBox(
                                         height: 30,
                                         child: DropdownButtonFormField<String>(
                                           items: const [
                                             DropdownMenuItem(value: "set",child: Text("Set"),),
                                             DropdownMenuItem(value: "not set",child: Text("Not Set"),),
                                           ],
-                                          value: filters.value[index][2].isEmpty ? null : filters.value[index][2],
+                                          value: filterModel.filterData[index].value.isEmpty ? null : filterModel.filterData[index].value,
                                           isExpanded: true,
                                           onChanged: (val) {
-                                            controllersList[filters.value[index][0]]!.text = val!;
-                                            filters.value[index][2] = val.encodeUrl();
+                                            controllersList[filterModel.filterData[index].key]!.text = val!;
+                                            filterModel.filterData[index].value = val.encodeUrl();
                                             refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                           },
                                           decoration: InputDecoration(
@@ -998,68 +1019,37 @@ class _TableViewState extends State<TableView> {
                                               fillColor: Colors.grey.shade100),
                                         ),
                                       ) :
-                                      // filters.value[index][1] == "Equals" ? DropdownButtonFormField(
-                                      //   isDense: true,
-                                      //   style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                      //   onChanged: (val) {
-                                      //     localList[1] = val!;
-                                      //   },
-                                      //   onSaved: (val) {
-                                      //     localList[1] = val!;
-                                      //   },
-                                      //   isExpanded: true,
-                                      //   items: applicableFilter
-                                      //       .map((e) => DropdownMenuItem(
-                                      //     value: e,
-                                      //     child: Text(e),
-                                      //   ))
-                                      //       .toList(),
-                                      //   decoration: InputDecoration(
-                                      //       constraints: const BoxConstraints(maxHeight: 30),
-                                      //       focusedBorder: OutlineInputBorder(
-                                      //           borderSide: const BorderSide(color: Colors.transparent),
-                                      //           borderRadius: BorderRadius.circular(6)),
-                                      //       enabledBorder: OutlineInputBorder(
-                                      //           borderSide: const BorderSide(color: Colors.transparent),
-                                      //           borderRadius: BorderRadius.circular(6)),
-                                      //       contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-                                      //       filled: true,
-                                      //       fillColor: Colors.grey.shade100),
-                                      // ) :
                                       FilterCell(
                                         textFieldRadius: 5,
                                         onlyTextField: true,
                                         columnSize: 175,
-                                        controller: controllersList[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key :filters.value[index][0]]!,
+                                        controller: controllersList[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key :filterModel.filterData[index].key]!,
                                         onChanged: (val){
-                                              controllersList[filters.value[index][0]]!.text = val!;
-                                              filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
-                                                  ? val = "%25$val%25"
-                                                  : val;
-                                              filters.value[index][2] = val.encodeUrl();
-                                              refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                          val = (filterModel.filterData[index].filterType.isEmpty ? validFilters[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key : filterModel.filterData[index].key]!.filterData.defaultFilterType : filterModel.filterData[index].filterType) == "Like" || (filterModel.filterData[index].filterType.isEmpty ? validFilters[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key : filterModel.filterData[index].key]!.filterData.defaultFilterType : filterModel.filterData[index].filterType) == "Not Like" ? "%25$val%25"  : val;
+                                              filterModel.filterData[index].value = val!.encodeUrl();
+                                              // refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                         },
-                                        tableColumn: validFilters[filters.value[index][0].isEmpty ? tableHeader.value!.data.columns[index].key : filters.value[index][0]]!,
+                                        tableColumn: validFilters[filterModel.filterData[index].key.isEmpty ? tableHeader.value!.data.columns[index].key : filterModel.filterData[index].key]!,
                                         onSubmit: (val) {
-                                          controllersList[filters.value[index][0]]!.text = val!;
-                                          filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
+                                          controllersList[filterModel.filterData[index].key]!.text = val!;
+                                          filterModel.filterData[index].filterType == "Like" || filterModel.filterData[index].filterType == "Not Like"
                                               ? val = "%25$val%25"
                                               : val;
-                                          filters.value[index][2] = val.encodeUrl();
+                                          filterModel.filterData[index].value = val.encodeUrl();
                                           refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                         },
                                       )
                                       // TextFormField(
-                                      //   initialValue: filters.value[index][2].isNotEmpty && (filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like")
-                                      //       ? filters.value[index][2].removePercentage() : filters.value[index][2],
+                                      //   initialValue: filterModel.filterData[index][2].isNotEmpty && (filterModel.filterData[index][1] == "Like" || filterModel.filterData[index][1] == "Not Like")
+                                      //       ? filterModel.filterData[index][2].removePercentage() : filterModel.filterData[index][2],
                                       //   cursorHeight: 15,
                                       //   validator: (val) => val!.isEmpty ? "Please enter value" : null,
                                       //   onSaved: (val) {
-                                      //     controllersList[filters.value[index][0]]!.text = val!;
-                                      //     filters.value[index][1] == "Like" || filters.value[index][1] == "Not Like"
+                                      //     controllersList[filterModel.filterData[index][0]]!.text = val!;
+                                      //     filterModel.filterData[index][1] == "Like" || filterModel.filterData[index][1] == "Not Like"
                                       //         ? val = "%25$val%25"
                                       //         : val;
-                                      //     filters.value[index][2] = val.encodeUrl();
+                                      //     filterModel.filterData[index][2] = val.encodeUrl();
                                       //     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                       //   },
                                       // ),
@@ -1069,13 +1059,13 @@ class _TableViewState extends State<TableView> {
                                     ),
                                     InkWell(
                                         onTap: () {
-                                          if (filters.value.isNotEmpty) {
-                                            print(filters.value[index][0]);
-                                            print(controllersList[filters.value[index][0]]!.text);
-                                            if(controllersList[filters.value[index][0]] != null) {
-                                              controllersList[filters.value[index][0]]!.clear();
+                                          if (filterModel.filterData.isNotEmpty) {
+                                            print(filterModel.filterData[index].key);
+                                            print(controllersList[filterModel.filterData[index].key]!.text);
+                                            if(controllersList[filterModel.filterData[index].key] != null) {
+                                              controllersList[filterModel.filterData[index].key]!.clear();
                                             }
-                                            filters.value.removeAt(index);
+                                            filterModel.filterData.removeAt(index);
                                           }
                                           setState(() {});
                                         },
@@ -1098,7 +1088,8 @@ class _TableViewState extends State<TableView> {
                                       ? null
                                       : () {
                                     filterCount.add(filterCount.length);
-                                    filters.value.add(["","",""]);
+                                    filterModel.filterData.add(Filter(key: '', filterType: '', value: '', name: ''));
+                                    // filterCubit.addFilter([]);
                                     filterControllers.add(TextEditingController());
                                     setState(() {});
                                   },
@@ -1109,7 +1100,7 @@ class _TableViewState extends State<TableView> {
                                   onPressed: () {
                                     filterCount.clear();
                                     filterControllers.clear();
-                                    filters.value.clear();
+                                    filterModel.filterData.clear();
                                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                     dataUpdate(mainContext);
                                     Navigator.pop(context);
@@ -1198,9 +1189,9 @@ class _TableViewState extends State<TableView> {
                   onPressed: snapshot.isEmpty
                       ? null
                       : () {
-                    final localFilters = List.from(filters.value);
+                    final localFilters = List<Filter>.from(filterModel.filterData);
                     for(var val in localFilters) {
-                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                      filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
                     }
                     lastValue.clear();
                     if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
@@ -1224,7 +1215,7 @@ class _TableViewState extends State<TableView> {
             child: BlocConsumer<TableBloc, TableStates>(
                 listener: (context, state) {
                   if(state is TableLoadedState && widget.params!.isNotEmpty) {
-                    filters.value.clear();
+                    filterModel.filterData.clear();
                     JWT jwtDecoded = JWT.decode(widget.params!["data"]);
                     localParams = jwtDecoded.payload;
                     for (var element in state.table.message.tables) {
@@ -1234,13 +1225,13 @@ class _TableViewState extends State<TableView> {
                     }
                     Map<String, dynamic> params = {"tableName" : localParams["tableName"]};
                     if(localParams["filters"] != null) {
-                      List<List<String>> paramFilters = [];
+                      List<Filter> paramFilters = [];
                       for(List aa in jsonDecode(localParams["filters"])){
-                        final subFilter = List<String>.from(aa);
+                        final subFilter = Filter(key: aa[0], filterType: aa[1], value: aa[2], name: aa[3]);
                         paramFilters.add(subFilter);
                       }
-                      filters.value.addAll(paramFilters);
-                      params["filters"] = jsonEncode(filters.value);
+                      filterModel.filterData.addAll(paramFilters);
+                      params["filters"] = jsonEncode(filterModel.fullFiltersList());
                     }
                     if(localParams["sortBy"] != null) {
                       params["sortBy"] = localParams["sortBy"];
@@ -1258,7 +1249,7 @@ class _TableViewState extends State<TableView> {
                         FetchTableRowDataEvent(
                             baseUrl: tableHeader.value!.actionApi,
                             length: rowsPerPage,
-                            filters: filters.value,
+                            filters: filterModel.filtersList(),
                             sortBy: sortByWithOrder.value
                         ));
                     for(int y = 0; y < rowsPerPage; y++) {
@@ -1266,7 +1257,7 @@ class _TableViewState extends State<TableView> {
                     }
                     sortList.clear();
                     validFilters.clear();
-                    // filters.value.clear();
+                    // filterModel.filterData.clear();
                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                     controllersList = {};
                     columnMeta = [];
@@ -1284,6 +1275,7 @@ class _TableViewState extends State<TableView> {
                         width: tableHeader.value!.data.columns[index].cellWidth,
                         fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                         isFreezed: false,
+                        localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                         isHover: false,
                         isSelected: false,
                         sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
@@ -1292,6 +1284,7 @@ class _TableViewState extends State<TableView> {
                         width: 150,
                         fixedWidth: 150,
                         isFreezed: false,
+                        localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                         isHover: false,
                         isSelected: false,
                         sortEnabled: false
@@ -1314,7 +1307,7 @@ class _TableViewState extends State<TableView> {
                     }
                     sortList.clear();
                     validFilters.clear();
-                    filters.value.clear();
+                    filterModel.filterData.clear();
                     sortByWithOrder.value = tableHeader.value!.defaultSort;
                     refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                     controllersList = {};
@@ -1333,6 +1326,7 @@ class _TableViewState extends State<TableView> {
                         width: tableHeader.value!.data.columns[index].cellWidth,
                         fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                         isFreezed: false,
+                        localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                         isHover: false,
                         isSelected: false,
                         sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
@@ -1341,6 +1335,7 @@ class _TableViewState extends State<TableView> {
                           width: 150.0,
                           fixedWidth: 150.0,
                           isFreezed: false,
+                          localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                           isHover: false,
                           isSelected: false,
                           sortEnabled: false
@@ -1445,7 +1440,7 @@ class _TableViewState extends State<TableView> {
                                       }
                                       sortList.clear();
                                       validFilters.clear();
-                                      filters.value.clear();
+                                      filterModel.filterData.clear();
                                       sortByWithOrder.value = tableHeader.value!.defaultSort;
                                       refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
                                       controllersList = {};
@@ -1463,6 +1458,7 @@ class _TableViewState extends State<TableView> {
                                           width: tableHeader.value!.data.columns[index].cellWidth,
                                           fixedWidth: tableHeader.value!.data.columns[index].cellWidth,
                                           isFreezed: false,
+                                          localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                                           isHover: false,
                                           isSelected: false,
                                           sortEnabled: tableHeader.value!.data.columns[index].sort.sortEnabled
@@ -1470,6 +1466,7 @@ class _TableViewState extends State<TableView> {
                                         columnMeta.insert(0,ColumnMeta(
                                             width: 150,
                                             fixedWidth: 150,
+                                            localFilterData: Filter(key: '', filterType: '', value: '', name: ''),
                                             isFreezed: false,
                                             isHover: false,
                                             isSelected: false,
@@ -1533,26 +1530,43 @@ class _TableViewState extends State<TableView> {
               style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
               padding: EdgeInsets.zero,
               onPressed: lastValue.isEmpty ? null : () {
-                final localFilters = List.from(filters.value);
+                final localFilters = List<Filter>.from(filterModel.filterData);
+
                 for(var val in localFilters) {
-                  filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                  filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
                 }
+                final localFilterPrev = Filter(
+                  key: sortByWithOrder.value.split(" ")[0],
+                  name: "",
+                  filterType: "",
+                  value:  row[row.length-1].row[sortedIndex].value.toString(),
+                );
+                final localFilterNext = Filter(
+                  key: sortByWithOrder.value.split(" ")[0],
+                  name: "",
+                  filterType: "",
+                  value:  lastValue.last,
+                );
                 if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[0].row[sortedIndex].value.toString()]);
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less or Equals",lastValue.last]);
+                  localFilterPrev.filterType = "Greater Than";
+                  localFilterNext.filterType = "Less or Equals";
+                  filterModel.filterData.add(localFilterPrev);
+                  filterModel.filterData.add(localFilterNext);
 
                 } else {
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[0].row[sortedIndex].value.toString()]);
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater or Equals",lastValue.last]);
+                  localFilterPrev.filterType = "Less Than";
+                  localFilterNext.filterType = "Greater or Equals";
+                  filterModel.filterData.add(localFilterPrev);
+                  filterModel.filterData.add(localFilterNext);
                 }
                 lastValue.remove(lastValue.last);
                 if(lastValue.isEmpty){
                   for(var val in localFilters) {
-                      filters.value.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                      filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
                   }
                 }
                 dataUpdate(mainContext);
-                // print("object ${filters.value}");
+                // print("object ${filterModel.filterData}");
                 setState(() {
 
                 });
@@ -1566,20 +1580,28 @@ class _TableViewState extends State<TableView> {
             width: 25,
             child: IconButton(
               onPressed: () {
-                final localFilters = List.from(filters.value);
+                final localFilters = List<Filter>.from(filterModel.filterData);
                 for(var val in localFilters) {
-                  if(val.first == sortByWithOrder.value.split(" ")[0]) {
-                    filters.value.remove(val);
+                  if(val.key == sortByWithOrder.value.split(" ")[0]) {
+                    filterModel.filterData.remove(val);
                   }
                 }
                 lastValue.add(row[0].row[sortedIndex].value.toString());
                 // print(lastValue);
+                final localFilterSort = Filter(
+                  key: sortByWithOrder.value.split(" ")[0],
+                  name: "",
+                  filterType: "",
+                  value:  row[row.length-1].row[sortedIndex].value.toString(),
+                );
                 if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[row.length-1].row[sortedIndex].value.toString()]);
+                  localFilterSort.filterType = "Less Than";
+                  filterModel.filterData.add(localFilterSort);
                 } else {
-                  filters.value.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[row.length-1].row[sortedIndex].value.toString()]);
+                  localFilterSort.filterType = "Greater Than";
+                  filterModel.filterData.add(localFilterSort);
                 }
-                // print("object ${filters.value}");
+                // print("object ${filterModel.filterData}");
                 dataUpdate(mainContext);
                 setState(() {
 
@@ -1607,32 +1629,4 @@ class _TableViewState extends State<TableView> {
   void dispose() {
     super.dispose();
   }
-}
-
-
-
-class Header extends SliverPersistentHeaderDelegate {
-  final double extent;
-  final Widget child;
-
-  Header({required this.extent, required this.child});
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
-
-  @override
-  double get maxExtent => extent;
-
-  @override
-  double get minExtent => extent;
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
-}
-
-class ExpansionMeta {
-  ExpansionMeta({required this.isExpended,required this.body,required this.header});
-  bool isExpended;
-  Widget header;
-  Widget body;
 }

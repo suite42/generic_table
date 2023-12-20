@@ -90,6 +90,18 @@ class FilterCell extends StatelessWidget {
                 onSubmit("${abc.year}-${abc.month}-${abc.day}");
           },
         );
+      case "datetime" :
+        return TextFormField(
+          controller: controller,
+          enabled: tableColumn!.filterData.supportedFilters.isNotEmpty,
+          readOnly: true,
+          decoration: filterDecoration(),
+          onTap: () async {
+            final abc = await showOmniDateTimePicker(context: context,type: OmniDateTimePickerType.date);
+            controller.text = "${abc!.year}-${abc.month}-${abc.day}";
+            onSubmit("${abc.year}-${abc.month}-${abc.day}");
+          },
+        );
       case "dropdown" :
         return DropdownButtonFormField<String>(
           items: tableColumn!.writeOptions.options.supportedValues!.map((e) =>
