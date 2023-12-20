@@ -20,6 +20,7 @@ import 'generic_table/table_body/views/filter_cell.dart';
 import 'generic_table/table_body/views/row_cell.dart';
 import 'generic_table/table_header/bloc/bloc/table_bloc.dart';
 import 'generic_table/table_header/models/generic_table_model.dart';
+import 'generic_table/widgets/custom_expansion_tile.dart';
 import 'generic_table/widgets/sliver_header.dart';
 
 String basePath = "";
@@ -111,7 +112,6 @@ class _TableViewState extends State<TableView> {
     for (int x = 0; x < scrollList.length; x++) {
       scrollList[x] = _controllerGroup.addAndGet();
     }
-    print("init state");
     super.initState();
     context.read<TableBloc>().add(FetchTableList());
   }
@@ -287,10 +287,10 @@ class _TableViewState extends State<TableView> {
                                 valueListenable: rowHeight,
                                 builder: (context, snapshot,wid) {
                                   return
-                                    // CustomExpansionTile(
-                                    // controlAffinity: ListTileControlAffinity.leading,
-                                    // tilePadding: EdgeInsets.zero,
-                                    // title:
+                                    CustomExpansionTile(
+                                    controlAffinity: ListTileControlAffinity.leading,
+                                    tilePadding: EdgeInsets.zero,
+                                    title:
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
@@ -430,8 +430,8 @@ class _TableViewState extends State<TableView> {
                                                 },
                                                 child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
                                       ],
-                                    );
-                                  // );
+                                    )
+                                  );
                                 }
                             ),
                       ),
@@ -477,7 +477,7 @@ class _TableViewState extends State<TableView> {
     return Positioned(
         top: 50,
         height: 40,
-        left: 0,
+        left: 34,
         right: 0,
         child: CustomScrollView(
           controller: scrollList[1],
@@ -544,8 +544,7 @@ class _TableViewState extends State<TableView> {
   Positioned tableColumns(BuildContext mainContext) {
     return Positioned(
       height: 55,
-      // left: 34,
-      left: 0,
+      left: 34,
       right: 0,
       child: CustomScrollView(
         controller: scrollList[0],
@@ -810,13 +809,21 @@ class _TableViewState extends State<TableView> {
                       children: [
                         Text("${list[index].name} - ${list[index].filterType.toLowerCase() == "like" || list[index].filterType.toLowerCase() == "not like" ? list[index].value.removePercentage() : list[index].value}"),
                         const SizedBox(width: 3),
+                        if(!(sortByWithOrder.value == tableHeader.value!.defaultSort))
                         InkWell(
-                            onTap: list[index].name == "Sort By" ? null : () {
-                              filterModel.filterData.remove(list[index]);
-                              print(list[index].key);
-                              print(controllersList[list[index].key]!.text);
-                              controllersList[list[index].key]!.clear();
+                            onTap:  () {
+                              if(list[index].name == "Sort By") {
+                                sortByWithOrder.value = tableHeader.value!.defaultSort;
+                              } else {
+                                filterModel.filterData.remove(list[index]);
+                                controllersList[list[index].key]!.clear();
+                              }
+                              // filterModel.filterData.remove(list[index]);
+                              // print(list[index].key);
+                              // print(controllersList[list[index].key]);
+                              // print(controllersList);
                               dataUpdate(mainContext);
+                              print("callingngg");
                               setState(() {
 
                               });
@@ -853,9 +860,7 @@ class _TableViewState extends State<TableView> {
           onCanceled: (){
             if(filterModel.filterData.isNotEmpty){
               for(var val in filterModel.filterData){
-                print("ggggggg");
                 if(val.value.isEmpty) {
-                  print("ffffffff");
                   filterModel.filterData.remove(val);
                 }
               }
@@ -1630,3 +1635,4 @@ class _TableViewState extends State<TableView> {
     super.dispose();
   }
 }
+
