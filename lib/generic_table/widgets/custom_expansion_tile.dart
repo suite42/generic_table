@@ -215,7 +215,7 @@ class CustomExpansionTile extends StatefulWidget {
     required this.title,
     this.subtitle,
     this.onExpansionChanged,
-    this.children = const <Widget>[],
+    this.child,
     this.trailing,
     this.initiallyExpanded = false,
     this.maintainState = false,
@@ -230,6 +230,7 @@ class CustomExpansionTile extends StatefulWidget {
     this.iconColor,
     this.collapsedIconColor,
     this.shape,
+    this.enabled = true,
     this.collapsedShape,
     this.clipBehavior,
     this.controlAffinity,
@@ -258,6 +259,10 @@ class CustomExpansionTile extends StatefulWidget {
   /// Typically a [Text] widget.
   final Widget? subtitle;
 
+  /// Default is true make it false to disable.
+
+  final bool enabled;
+
   /// Called when the tile expands or collapses.
   ///
   /// When the tile starts expanding, this function is called with the value
@@ -268,7 +273,7 @@ class CustomExpansionTile extends StatefulWidget {
   /// The widgets that are displayed when the tile expands.
   ///
   /// Typically [ListTile] widgets.
-  final List<Widget> children;
+  final Widget? child;
 
   /// The color to display behind the sublist when expanded.
   ///
@@ -607,7 +612,7 @@ class _ExpansionTileState extends State<CustomExpansionTile> with SingleTickerPr
             iconColor: _iconColor.value ?? expansionTileTheme.iconColor,
             textColor: _headerColor.value,
             child: InkWell(
-              onTap: _handleTap,
+              onTap: widget.enabled ? _handleTap : null,
               child: Row(
                 children: [
                   Padding(padding: EdgeInsets.only(right: 10),
@@ -679,10 +684,7 @@ class _ExpansionTileState extends State<CustomExpansionTile> with SingleTickerPr
         enabled: !closed,
         child: Padding(
           padding: widget.childrenPadding ?? expansionTileTheme.childrenPadding ?? EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: widget.expandedCrossAxisAlignment ?? CrossAxisAlignment.center,
-            children: widget.children,
-          ),
+          child: widget.child,
         ),
       ),
     );

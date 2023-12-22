@@ -49,7 +49,7 @@ class ApiServices {
 
       // print(res.body);
       if(res.statusCode == 200) {
-        return ApiResponseModel(status: res.statusCode, message: "message", data: "");
+        return ApiResponseModel(status: res.statusCode, message: "message", data: jsonDecode(res.body));
       } else {
         return ApiResponseModel(status: res.statusCode, message: "message", data: jsonDecode(res.body)['readable_message']);
       }

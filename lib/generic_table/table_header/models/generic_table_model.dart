@@ -86,17 +86,25 @@ class TableHeader {
 
 class Data {
   List<TableColumn> columns;
+  List<SubRow>? subRow;
+  SubRowActionApi? subRowActionApi;
 
   Data({
     required this.columns,
+    required this.subRow,
+    required this.subRowActionApi,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
     columns: List<TableColumn>.from(json["columns"].map((x) => TableColumn.fromJson(x))),
+    subRow: json["sub_row"] == null ? null : List<SubRow>.from(json["sub_row"].map((x) => SubRow.fromJson(x))),
+    subRowActionApi: json["sub_row_action_api"] == null ? null : SubRowActionApi.fromJson(json["sub_row_action_api"]),
   );
 
   Map<String, dynamic> toJson() => {
     "columns": List<dynamic>.from(columns.map((x) => x.toJson())),
+    "sub_row": List<dynamic>.from(subRow!.map((x) => x.toJson())),
+    "sub_row_action_api": subRowActionApi!.toJson(),
   };
 }
 
@@ -318,5 +326,53 @@ class ActionApiField {
     "data_type": dataType,
     "mandatory": mandatory,
     "param_type": paramType,
+  };
+}
+
+class SubRow {
+  String key;
+  String? displayName;
+  bool primaryKey;
+  String? value;
+
+  SubRow({
+    required this.key,
+    this.displayName,
+    required this.primaryKey,
+    this.value,
+  });
+
+  factory SubRow.fromJson(Map<String, dynamic> json) => SubRow(
+    key: json["key"],
+    displayName: json["display_name"],
+    primaryKey: json["primary_key"],
+    value: json["value"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "key": key,
+    "display_name": displayName,
+    "primary_key": primaryKey,
+    "value": value,
+  };
+}
+
+class SubRowActionApi {
+  String subRowApi;
+  List<ActionApiField> actionApiFields;
+
+  SubRowActionApi({
+    required this.subRowApi,
+    required this.actionApiFields,
+  });
+
+  factory SubRowActionApi.fromJson(Map<String, dynamic> json) => SubRowActionApi(
+    subRowApi: json["sub_row_api"],
+    actionApiFields: List<ActionApiField>.from(json["action_api_fields"].map((x) => ActionApiField.fromJson(x))),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "sub_row_api": subRowApi,
+    "action_api_fields": List<dynamic>.from(actionApiFields.map((x) => x.toJson())),
   };
 }

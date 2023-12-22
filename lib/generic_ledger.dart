@@ -6,7 +6,9 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:generic_ledger/generic_table/generic_model/api_response_model.dart';
 import 'package:generic_ledger/generic_table/generic_model/column_meta.dart';
+import 'package:generic_ledger/generic_table/services/table_api_services.dart';
 import 'package:generic_ledger/generic_table/table_body/models/table_row_data_model.dart';
 import 'package:generic_ledger/utils/extensions.dart';
 import 'package:generic_ledger/utils/global_methods.dart';
@@ -286,12 +288,22 @@ class _TableViewState extends State<TableView> {
                             child: ValueListenableBuilder(
                                 valueListenable: rowHeight,
                                 builder: (context, snapshot,wid) {
-                                  return
-                                    CustomExpansionTile(
+                                  final getSubRowParams = {};
+                                  if(tableHeader.value!.data.subRow != null){
+                                    for(var data in tableHeader.value!.data.subRowActionApi!.actionApiFields) {
+                                      for(var rowData in row[index].row) {
+                                        if(data.fieldNameInTable == rowData.key) {
+                                          getSubRowParams[data.fieldNameInActionApi] = rowData.value;
+                                        }
+                                      }
+                                    }
+                                  }
+                                  return CustomExpansionTile(
+                                    enabled: tableHeader.value!.data.subRow != null,
                                     controlAffinity: ListTileControlAffinity.leading,
+                                    shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
                                     tilePadding: EdgeInsets.zero,
-                                    title:
-                                    Column(
+                                    title: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -430,7 +442,57 @@ class _TableViewState extends State<TableView> {
                                                 },
                                                 child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
                                       ],
-                                    )
+                                    ),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(left: 34),
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                children: List.generate(tableHeader.value!.data.subRow!.length, (index) => Container(
+                                                  height: 30,
+                                                  width: 170,
+                                                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                                                  decoration:  BoxDecoration(
+                                                      color: Colors.grey.shade300,
+                                                      border: Border(left: BorderSide(color: Colors.grey.shade400))
+                                                  ),
+                                                  child: Center(child: Text(tableHeader.value!.data.subRow![index].displayName!,style: const TextStyle(fontWeight: FontWeight.bold),)),
+                                                )),
+                                              ),
+                                              FutureBuilder<ApiResponseModel>(
+                                                  future: ApiServices().actionApiCall(baseUrl: tableHeader.value!.data.subRowActionApi!.subRowApi, body: {"data" : getSubRowParams}),
+                                                  builder: (context,snapshot) {
+                                                    if(snapshot.hasData) {
+                                                      final message = TableRowDataModel.fromJson(snapshot.data!.data);
+                                                      return message.message.rows.isEmpty ? const Center(child: Padding(
+                                                        padding: EdgeInsets.all(12.0),
+                                                        child: Text(StringConstants.noData,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),),
+                                                      ),) : Column(
+                                                        children: List.generate(message.message.rows.length, (subRowIndex) => SizedBox(
+                                                            height: 30,
+                                                            child: Row(
+                                                              children: List.generate(message.message.rows[subRowIndex].row.length, (subInnerRowIndex) => Container(
+                                                                width: 170,
+                                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                                                                height: 40,
+                                                                decoration: BoxDecoration(
+                                                                    border: Border(left: BorderSide(color: Colors.grey.shade300),bottom: BorderSide(color: Colors.grey.shade300))),
+                                                                child: Text(message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString()),
+                                                              )),
+                                                            )
+                                                        )
+                                                        ),
+                                                      );
+                                                    } else {
+                                                      return const Center(child: CircularProgressIndicator(),);
+                                                    }
+                                                  })
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                   );
                                 }
                             ),

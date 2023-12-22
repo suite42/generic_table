@@ -18,7 +18,7 @@ class GlobalMethods {
     Uri uri = Uri.parse(url.trim());
 
     print("Get Url -$url");
-    // print("auth token -${StringConstants.token}");
+    print("auth token -${StringConstants.token}");
 
     try {
       final res = await http.get(uri,headers: headers);
