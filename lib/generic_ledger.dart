@@ -298,7 +298,7 @@ class _TableViewState extends State<TableView> {
                                       }
                                     }
                                   }
-                                  return CustomExpansionTile(
+                                  return tableHeader.value!.data.subRow != null ? CustomExpansionTile(
                                     enabled: tableHeader.value!.data.subRow != null,
                                     controlAffinity: ListTileControlAffinity.leading,
                                     shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
@@ -493,6 +493,145 @@ class _TableViewState extends State<TableView> {
                                           ),
                                         ),
                                       ),
+                                  ) : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        height: snapshot[index],
+                                        child: CustomScrollView(
+                                            controller: scrollList[index + 2],
+                                            shrinkWrap: true,
+                                            primary: false,
+                                            scrollDirection: Axis.horizontal,
+                                            slivers: List.generate(columnMeta.length, (x) {
+                                              return SliverPersistentHeader(
+                                                pinned: columnMeta[x].isFreezed,
+                                                delegate: Header(
+                                                  extent: columnMeta[x].width,
+                                                  child: x == 0 ? Container(
+                                                    padding: const EdgeInsets.only(left: 10),
+                                                    // width: columnMeta[index].width,
+                                                    decoration: BoxDecoration(
+                                                        color:  const Color(0xFFF2F2F2),
+                                                        border: Border(right: BorderSide(color: Colors.grey.shade300))
+                                                    ),
+                                                    child: row[index].action != null && row[index].action!.isNotEmpty ? Center(
+                                                      child: ListView.builder(
+                                                          shrinkWrap: true,
+                                                          scrollDirection: Axis.horizontal,
+                                                          itemCount: row[index].action!.length,
+                                                          itemBuilder : (context,localIndex) => IconButton(
+                                                            onPressed: (){
+                                                              String? desc = "";
+                                                              Map<String, dynamic>  valData = {};
+                                                              for(var x in row[index].row) {
+                                                                for(int y = 0; y < tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"].length; y++) {
+                                                                  if(x.key == tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_table"]){
+                                                                    valData[tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api_fields"][y]["field_name_in_action_api"]] = x.value;
+                                                                  }
+                                                                }
+                                                              }
+                                                              showDialog(context: context,barrierDismissible: false, builder: (context) {
+                                                                final formKey = GlobalKey<FormState>();
+                                                                return BlocProvider.value(
+                                                                  value: BlocProvider.of<PaymentBloc>(mainContext),
+                                                                  child: BlocConsumer<PaymentBloc,PaymentsState>(
+                                                                      listener: (context, state) {
+                                                                        if(state is PaymentsLoadedState) {
+                                                                          dataUpdate(mainContext);
+                                                                          Navigator.pop(context);
+                                                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Success"),backgroundColor: Colors.green,));
+                                                                        } else if (state is PaymentsErrorState) {
+                                                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message),backgroundColor: Colors.red,));
+                                                                        }
+                                                                      },
+                                                                      builder: (context, state) {
+                                                                        final size = MediaQuery.of(context).size;
+                                                                        return AlertDialog(
+                                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                                          title: Visibility(visible: state is! PaymentsLoadingState,child: Text(row[index].action![localIndex].action,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),)),
+                                                                          content: state is PaymentsLoadingState ? SizedBox(height: size.height / 3,child: const Center(child: CircularProgressIndicator())) : Form(
+                                                                              key: formKey,
+                                                                              child: SizedBox(
+                                                                                width: size.width / 3,
+                                                                                child: TextFormField(
+                                                                                  initialValue: desc,
+                                                                                  decoration: const InputDecoration(
+                                                                                    hintText: "Enter description",
+                                                                                    border: OutlineInputBorder(),
+                                                                                    focusedBorder: OutlineInputBorder(),
+                                                                                  ),
+                                                                                  maxLines: 4,
+                                                                                  onSaved: (val){
+                                                                                    valData["description"] = val != null && val.isNotEmpty ? val : valData["description"];
+                                                                                    context.read<PaymentBloc>().add(PaymentsActionEvent(
+                                                                                        tableHeader.value!.actions![row[index].action![localIndex].action]!["action_api"],
+                                                                                        {
+                                                                                          "data" : valData
+                                                                                        }
+                                                                                    ));
+                                                                                  },
+                                                                                  validator: row[index].action![localIndex].action == "Approve" ? null : (val) {
+                                                                                    if(val == null || val.isEmpty) {
+                                                                                      return "Please enter some description";
+                                                                                    } else if (val.length < 5) {
+                                                                                      "Please write more than one word";
+                                                                                    } else {
+                                                                                      return null;
+                                                                                    }
+                                                                                  },
+                                                                                ),
+                                                                              )),
+                                                                          actions: state is PaymentsLoadingState ? [] : [
+                                                                            ElevatedButton(onPressed: (){
+                                                                              if(formKey.currentState!.validate()) {
+                                                                                formKey.currentState!.save();
+                                                                              }
+                                                                            }, child: const Text("Submit",style: TextStyle(fontWeight: FontWeight.bold))),
+                                                                            OutlinedButton(onPressed: (){
+                                                                              Navigator.pop(context);
+                                                                            }, child: const Text("Cancel")),
+                                                                          ],
+                                                                        );
+                                                                      }
+                                                                  ),
+                                                                );
+                                                              });
+                                                            },
+                                                            icon: Image.network(tableHeader.value!.actions![row[index].action![localIndex].action]!["image_url"],width: 20,height: 20,),
+                                                            tooltip: row[index].action![localIndex].action,
+                                                          )
+                                                      ),
+                                                    ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
+                                                  ) : RowCell(
+                                                    tableHeader: tableHeader.value!,
+                                                    message: state.tableRowDataModel.message,
+                                                    activePage: activePage,
+                                                    body: updateBody,
+                                                    rowsPerPage: rowsPerPage,
+                                                    index: index,
+                                                    subIndex:x-1,
+                                                    selectedCell: selectedCell,
+                                                    cellSize: columnMeta[x].width,
+                                                    isSelected: colSelected != null && colSelected == x,
+                                                  ),
+                                                ),
+                                              );
+                                            })
+                                        ),
+                                      ),
+                                      MouseRegion(
+                                          cursor: SystemMouseCursors.resizeUpDown,
+                                          child: GestureDetector(
+                                              onVerticalDragUpdate: (val) {
+                                                setState(() {
+                                                  final temp = 40 + val.localPosition.dy;
+                                                  rowHeight.value[index] = temp < 30 ? 30 : temp;
+                                                });
+                                              },
+                                              child: Center(child: Container(color: Colors.grey.withOpacity(.3), height: 2)))),
+                                    ],
                                   );
                                 }
                             ),
