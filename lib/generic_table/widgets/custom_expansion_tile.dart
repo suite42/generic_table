@@ -217,6 +217,7 @@ class CustomExpansionTile extends StatefulWidget {
     this.onExpansionChanged,
     this.child,
     this.trailing,
+    this.iconPadding,
     this.initiallyExpanded = false,
     this.maintainState = false,
     this.tilePadding,
@@ -305,6 +306,9 @@ class CustomExpansionTile extends StatefulWidget {
 
   /// Specifies if the list tile is initially expanded (true) or collapsed (false, the default).
   final bool initiallyExpanded;
+
+  /// Specifies Icon padding.
+  final EdgeInsetsGeometry? iconPadding;
 
   /// Specifies whether the state of the children is maintained when the tile expands and collapses.
   ///
@@ -615,7 +619,7 @@ class _ExpansionTileState extends State<CustomExpansionTile> with SingleTickerPr
               onTap: widget.enabled ? _handleTap : null,
               child: Row(
                 children: [
-                  Padding(padding: EdgeInsets.only(right: 10),
+                  Padding(padding: widget.iconPadding ?? EdgeInsets.only(right: 10),
                   child: widget.leading ?? _buildLeadingIcon(context)!),
                   Expanded(child: widget.title),
                 ],

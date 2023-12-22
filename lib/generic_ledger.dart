@@ -299,6 +299,7 @@ class _TableViewState extends State<TableView> {
                                     }
                                   }
                                   return tableHeader.value!.data.subRow != null ? CustomExpansionTile(
+                                    iconPadding: const EdgeInsets.fromLTRB(0, 10, 10, 10),
                                     enabled: tableHeader.value!.data.subRow != null,
                                     controlAffinity: ListTileControlAffinity.leading,
                                     shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
@@ -678,7 +679,7 @@ class _TableViewState extends State<TableView> {
     return Positioned(
         top: 50,
         height: 40,
-        left: 34,
+        left: tableHeader.value!.data.subRow != null ? 34 : 0,
         right: 0,
         child: CustomScrollView(
           controller: scrollList[1],
@@ -745,7 +746,7 @@ class _TableViewState extends State<TableView> {
   Positioned tableColumns(BuildContext mainContext) {
     return Positioned(
       height: 55,
-      left: 34,
+      left: tableHeader.value!.data.subRow != null ? 34 : 0,
       right: 0,
       child: CustomScrollView(
         controller: scrollList[0],

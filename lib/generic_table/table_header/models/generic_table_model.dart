@@ -332,28 +332,28 @@ class ActionApiField {
 class SubRow {
   String key;
   String? displayName;
+  String? dataType;
   bool primaryKey;
-  String? value;
 
   SubRow({
     required this.key,
     this.displayName,
+    this.dataType,
     required this.primaryKey,
-    this.value,
   });
 
   factory SubRow.fromJson(Map<String, dynamic> json) => SubRow(
     key: json["key"],
     displayName: json["display_name"],
+    dataType: json["data_type"],
     primaryKey: json["primary_key"],
-    value: json["value"],
   );
 
   Map<String, dynamic> toJson() => {
     "key": key,
     "display_name": displayName,
     "primary_key": primaryKey,
-    "value": value,
+    "data_type": dataType,
   };
 }
 
