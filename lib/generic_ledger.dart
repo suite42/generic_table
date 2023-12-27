@@ -15,6 +15,7 @@ import 'package:generic_ledger/utils/global_methods.dart';
 import 'package:generic_ledger/utils/string_constants.dart';
 import 'package:go_router/go_router.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'generic_table/filters/filter_model.dart';
 import 'generic_table/table_body/bloc/bloc/payment_bloc.dart';
 import 'generic_table/table_body/bloc/bloc/table_body_bloc.dart';
@@ -470,7 +471,7 @@ class _TableViewState extends State<TableView> {
                                                       return message.message.rows.isEmpty ? const Center(child: Padding(
                                                         padding: EdgeInsets.all(12.0),
                                                         child: Text(StringConstants.noData,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),),
-                                                      ),) : Column(
+                                                      )) : Column(
                                                         children: List.generate(message.message.rows.length, (subRowIndex) => SizedBox(
                                                             height: 30,
                                                             child: Row(
@@ -480,7 +481,12 @@ class _TableViewState extends State<TableView> {
                                                                 height: 40,
                                                                 decoration: BoxDecoration(
                                                                     border: Border(left: BorderSide(color: Colors.grey.shade300),bottom: BorderSide(color: Colors.grey.shade300))),
-                                                                child: Text(message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString()),
+                                                                child: TextButton(
+                                                                  onPressed: message.message.rows[subRowIndex].row[subInnerRowIndex].href ==  null ? null : (){
+                                                                    launchUrl(Uri.parse(message.message.rows[subRowIndex].row[subInnerRowIndex].href!));
+                                                                  },
+                                                                  child: Text(message.message.rows[subRowIndex].row[subInnerRowIndex].value != null ? message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString() : StringConstants.notAvailable),
+                                                                ),
                                                               )),
                                                             )
                                                         )
@@ -844,7 +850,7 @@ class _TableViewState extends State<TableView> {
                       ),
                       child: GestureDetector(
                         onDoubleTap: (){
-                          columnMeta[x].width = cellMaxWidth[x]+20 < 75 ? 75 : cellMaxWidth[x]+20;
+                          columnMeta[x].width = cellMaxWidth[x]+10 < 75 ? 75 : cellMaxWidth[x]+10;
                           setState(() {});
                         },
                         child: Container(

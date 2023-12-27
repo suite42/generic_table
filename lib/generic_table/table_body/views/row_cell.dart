@@ -113,6 +113,7 @@ class _RowCellState extends State<RowCell> {
             )
             : Text(
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
+          softWrap: true,overflow: TextOverflow.ellipsis,
           style: TextStyle(
               color: GlobalMethods.getColor(
                   widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
@@ -164,6 +165,7 @@ class _RowCellState extends State<RowCell> {
             )
             : Text(
           _valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,
+          softWrap: true,overflow: TextOverflow.ellipsis,
           style: TextStyle(
               color: GlobalMethods.getColor(
                   widget.message.rows[widget.index ].row[widget.subIndex].cellTextColour),
