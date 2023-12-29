@@ -481,11 +481,12 @@ class _TableViewState extends State<TableView> {
                                                                 height: 40,
                                                                 decoration: BoxDecoration(
                                                                     border: Border(left: BorderSide(color: Colors.grey.shade300),bottom: BorderSide(color: Colors.grey.shade300))),
-                                                                child: TextButton(
+                                                                child: TextButton.icon(
+                                                                  icon: message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString().toLowerCase() == "download" ? const Icon(Icons.download,size: 20,) : SizedBox(),
                                                                   onPressed: message.message.rows[subRowIndex].row[subInnerRowIndex].href ==  null ? null : (){
                                                                     launchUrl(Uri.parse(message.message.rows[subRowIndex].row[subInnerRowIndex].href!));
                                                                   },
-                                                                  child: Text(message.message.rows[subRowIndex].row[subInnerRowIndex].value != null ? message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString() : StringConstants.notAvailable),
+                                                                  label: Text(message.message.rows[subRowIndex].row[subInnerRowIndex].value != null ? message.message.rows[subRowIndex].row[subInnerRowIndex].value.toString() : StringConstants.notAvailable),
                                                                 ),
                                                               )),
                                                             )
@@ -889,81 +890,64 @@ class _TableViewState extends State<TableView> {
                               ),
                               const SizedBox(width: 5,),
                               Expanded(
-                                  child: MouseRegion(
-                                    onEnter: (eve){
-                                      columnMeta[x].isHover = true;
-                                      setState(() {
-
-                                      });
-                                      // }
-                                    },
-                                    onExit: (val){
-                                      columnMeta[x].isHover = false;
-                                      setState(() {
-
-                                      });
-                                    },
-                                    child: Tooltip(
-                                        message: tableHeader.value!.data.columns[x-1].displayName.titleCase(),
-                                        preferBelow: false,
-                                        child: ValueListenableBuilder(
-                                            valueListenable: sortByWithOrder,
-                                            builder: (context, snapshot, wid) {
-                                              if(columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) {
-                                                sortedIndex = x-1;
-                                                // print("sortedIndex $sortedIndex");
-                                              }
-                                              // print("columnMeta[0].sortEnabled ${columnMeta[0].sortEnabled}");
-                                              return Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(tableHeader.value!.data.columns[x-1].displayName.titleCase(),
-                                                        style: const TextStyle(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis)),
-                                                  ),
-                                                  if((columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) && columnMeta[x].sortEnabled)
-                                                  tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0] ? SizedBox(
-                                                    width: 25,
-                                                    child: IconButton(
-                                                        onPressed: () {
-                                                          final localFilters = List<Filter>.from(filterModel.filterData);
-                                                          for(var val in localFilters) {
-                                                            filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
-                                                          }
-                                                          lastValue.clear();
-                                                      if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
-                                                        sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
-                                                      } else {
-                                                        sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.asc}";
-                                                      }
-                                                      dataUpdate(mainContext);
-                                                    }, icon: sortByWithOrder.value.split(" ")[1] == "ASC"
-                                                        ? const Icon(
-                                                      Icons.arrow_upward,
-                                                      size: 16,
-                                                    )
-                                                        : const Icon(
-                                                      Icons.arrow_downward,
-                                                      size: 16,
-                                                    )),
-                                                  ) : SizedBox(
-                                                    width: 25,
-                                                    child: IconButton(onPressed: (){
-                                                      final localFilters = List<Filter>.from(filterModel.filterData);
-                                                      for(var val in localFilters) {
-                                                        filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
-                                                      }
-                                                      lastValue.clear();
+                                  child: Tooltip(
+                                      message: tableHeader.value!.data.columns[x-1].displayName.titleCase(),
+                                      preferBelow: false,
+                                      child: ValueListenableBuilder(
+                                          valueListenable: sortByWithOrder,
+                                          builder: (context, snapshot, wid) {
+                                            if(columnMeta[x].isHover || tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0]) {
+                                              sortedIndex = x-1;
+                                            }
+                                            return Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(tableHeader.value!.data.columns[x-1].displayName.titleCase(),
+                                                      style: const TextStyle(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis)),
+                                                ),
+                                                if(columnMeta[x].sortEnabled)
+                                                tableHeader.value!.data.columns[x-1].key == sortByWithOrder.value.split(" ")[0] ? SizedBox(
+                                                  width: 25,
+                                                  child: IconButton(
+                                                      onPressed: () {
+                                                        final localFilters = List<Filter>.from(filterModel.filterData);
+                                                        for(var val in localFilters) {
+                                                          filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                                                        }
+                                                        lastValue.clear();
+                                                    if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
                                                       sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
-                                                      refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
-                                                      dataUpdate(mainContext);
-                                                      setState(() {});
-                                                    }, icon: const Icon(Icons.swap_vert,size: 16,)),
+                                                    } else {
+                                                      sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.asc}";
+                                                    }
+                                                    dataUpdate(mainContext);
+                                                  }, icon: sortByWithOrder.value.split(" ")[1] == "ASC"
+                                                      ? const Icon(
+                                                    Icons.arrow_upward,
+                                                    size: 16,
                                                   )
-                                                ],
-                                              );
-                                            })),
-                                  )),
+                                                      : const Icon(
+                                                    Icons.arrow_downward,
+                                                    size: 16,
+                                                  )),
+                                                ) : SizedBox(
+                                                  width: 25,
+                                                  child: IconButton(onPressed: (){
+                                                    final localFilters = List<Filter>.from(filterModel.filterData);
+                                                    for(var val in localFilters) {
+                                                      filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                                                    }
+                                                    lastValue.clear();
+                                                    sortByWithOrder.value = "${tableHeader.value!.data.columns[x-1].key} ${StringConstants.desc}";
+                                                    refresher.value == 0 ? refresher.value = 1 : refresher.value = 0;
+                                                    dataUpdate(mainContext);
+                                                    setState(() {});
+                                                  }, icon: const Icon(Icons.swap_vert,size: 16,)),
+                                                )
+                                              ],
+                                            );
+                                          }))),
                               const SizedBox(
                                 width: 5,
                               ),
@@ -1017,7 +1001,7 @@ class _TableViewState extends State<TableView> {
                       children: [
                         Text("${list[index].name} - ${list[index].filterType.toLowerCase() == "like" || list[index].filterType.toLowerCase() == "not like" ? list[index].value.removePercentage() : list[index].value}"),
                         const SizedBox(width: 3),
-                        if(!(sortByWithOrder.value == tableHeader.value!.defaultSort))
+                        if(!(list[index].name == "Sort By") || !(sortByWithOrder.value.toLowerCase() == tableHeader.value!.defaultSort.toLowerCase()))
                         InkWell(
                             onTap:  () {
                               if(list[index].name == "Sort By") {
@@ -1050,6 +1034,7 @@ class _TableViewState extends State<TableView> {
   }
 
   List<String> lastValue = [];
+
   Row header(TableHeader? snapshot, BuildContext mainContext) {
     return Row(
       children: [
@@ -1834,13 +1819,12 @@ class _TableViewState extends State<TableView> {
             icon: const Icon(Icons.more_vert),
             position: PopupMenuPosition.under,
             surfaceTintColor: Colors.white,
-            itemBuilder: (context) => [PopupMenuItem(onTap: () async {}, child: const Text("Export"))])
+            itemBuilder: (context) => [PopupMenuItem(onTap: () {
+              String url = "${tableHeader.value!.actionApi}?export=true?${filterModel.filtersList()}&orderBy=${sortByWithOrder.value}&limit_page_length=10000&Authorization=${StringConstants.token}";
+              launchUrl(Uri.parse(url));
+            }, child: const Text("Export"))])
       ],
     );
-  }
-  @override
-  void dispose() {
-    super.dispose();
   }
 }
 
