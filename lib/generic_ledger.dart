@@ -88,7 +88,7 @@ class TableView extends StatefulWidget {
 
 class _TableViewState extends State<TableView> {
 
-  int? selectedCell;
+  ValueNotifier<int?> selectedCell = ValueNotifier(null);
 
   int? colSelected;
 
@@ -125,7 +125,8 @@ class _TableViewState extends State<TableView> {
 
   List<Map<String, String>> sortList = [];
 
-  ValueNotifier<List<List<String>>> filters = ValueNotifier([]);
+  ValueNotifier<List<List<String>>?> filters = ValueNotifier(null);
+  List<List<String>> pageFilters = [];
 
   final filterModel = FilterListModel(filterData: []);
 
@@ -158,11 +159,11 @@ class _TableViewState extends State<TableView> {
       },
       child: GestureDetector(
         onTap: () {
-          if(selectedCell != null && tableUpdate != null && updateBody.isNotEmpty) {
+          if(selectedCell.value != null && tableUpdate != null && updateBody.isNotEmpty) {
             context.read<TableBloc>().add(UpdateTable(tableUpdate!.actionApi, {"data" : updateBody}));
           }
-          selectedCell = null;
-          setState(() {});
+          selectedCell.value = null;
+          // setState(() {});
         },
         child: Scaffold(
           backgroundColor: const Color(0xFFF2F2F2),
@@ -276,15 +277,15 @@ class _TableViewState extends State<TableView> {
                           : rowsPerPage,
                           (index) =>  InkWell(
                             onTap: (){
-                              if(selectedCell != null && tableUpdate != null && updateBody.isNotEmpty) {
+                              if(selectedCell.value != null && tableUpdate != null && updateBody.isNotEmpty) {
                                 context.read<TableBloc>().add(UpdateTable(tableUpdate!.actionApi, {"data" : updateBody}));
                               }
-                              selectedCell = null;
-                              setState(() {});
+                              selectedCell.value = null;
+                              // setState(() {});
                             },
                             onDoubleTap: () {
-                                selectedCell = index;
-                                setState(() {});
+                                selectedCell.value = index;
+                                // setState(() {});
                             },
                             child: ValueListenableBuilder(
                                 valueListenable: rowHeight,
@@ -416,7 +417,7 @@ class _TableViewState extends State<TableView> {
                                                           )
                                                       ),
                                                     ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
-                                                  ) : RowCell(
+                                                  ) : ValueListenableBuilder(valueListenable: selectedCell, builder: (context,snap,wdi) => RowCell(
                                                     tableHeader: tableHeader.value!,
                                                     message: state.tableRowDataModel.message,
                                                     activePage: activePage,
@@ -424,10 +425,10 @@ class _TableViewState extends State<TableView> {
                                                     rowsPerPage: rowsPerPage,
                                                     index: index,
                                                     subIndex:x-1,
-                                                    selectedCell: selectedCell,
+                                                    selectedCell: snap,
                                                     cellSize: columnMeta[x].width,
                                                     isSelected: colSelected != null && colSelected == x,
-                                                  ),
+                                                  )),
                                                 ),
                                               );
                                             })
@@ -612,17 +613,20 @@ class _TableViewState extends State<TableView> {
                                                           )
                                                       ),
                                                     ) : const Center(child: Text("No Action",style: TextStyle(fontWeight: FontWeight.bold),)),
-                                                  ) : RowCell(
-                                                    tableHeader: tableHeader.value!,
-                                                    message: state.tableRowDataModel.message,
-                                                    activePage: activePage,
-                                                    body: updateBody,
-                                                    rowsPerPage: rowsPerPage,
-                                                    index: index,
-                                                    subIndex:x-1,
-                                                    selectedCell: selectedCell,
-                                                    cellSize: columnMeta[x].width,
-                                                    isSelected: colSelected != null && colSelected == x,
+                                                  ) : ValueListenableBuilder(valueListenable: selectedCell,
+                                                    builder: (context,snap,wdi) => RowCell(
+                                                        tableHeader: tableHeader.value!,
+                                                        message: state.tableRowDataModel.message,
+                                                        activePage: activePage,
+                                                        body: updateBody,
+                                                        rowsPerPage: rowsPerPage,
+                                                        index: index,
+                                                        subIndex:x-1,
+                                                        selectedCell: snap,
+                                                        cellSize: columnMeta[x].width,
+                                                        isSelected: colSelected != null && colSelected == x,
+                                                      ),
+
                                                   ),
                                                 ),
                                               );
@@ -670,16 +674,18 @@ class _TableViewState extends State<TableView> {
 
     final signedJwt = jwt.sign(SecretKey("suite42FinanceWeb"));
     print("token $basePath");
-    if(widget.params!.isEmpty){
-      mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
-    } else {
+    // if(widget.params!.isEmpty){
+    //   mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt});
+    // } else {
       Router.neglect(context, () {mainContext.goNamed(basePath,queryParameters: {"data" : signedJwt}); });
-    }
+    // }
     mainContext.read<TableBodyBloc>().add(FetchTableRowDataEvent(
         baseUrl: tableHeader.value!.actionApi,
         filters: filterModel.filtersList(),
         sortBy: sortByWithOrder.value,
-        length: rowsPerPage));
+        length: rowsPerPage,
+      pageFilter: filters.value
+    ));
   }
 
   Positioned tableFilters(BuildContext mainContext) {
@@ -911,9 +917,12 @@ class _TableViewState extends State<TableView> {
                                                   width: 25,
                                                   child: IconButton(
                                                       onPressed: () {
-                                                        final localFilters = List<Filter>.from(filterModel.filterData);
-                                                        for(var val in localFilters) {
-                                                          filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                                                        // print("==== ${filters.value}");
+                                                        if(filters.value != null ){
+                                                          final localFilters = List.from(filters.value!);
+                                                          for(var val in localFilters) {
+                                                            filters.value!.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                                                          }
                                                         }
                                                         lastValue.clear();
                                                     if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
@@ -1387,9 +1396,11 @@ class _TableViewState extends State<TableView> {
                   onPressed: snapshot.isEmpty
                       ? null
                       : () {
-                    final localFilters = List<Filter>.from(filterModel.filterData);
-                    for(var val in localFilters) {
-                      filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                    if(filters.value != null ){
+                      final localFilters = List.from(filters.value!);
+                      for(var val in localFilters) {
+                        filters.value!.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
+                      }
                     }
                     lastValue.clear();
                     if (sortByWithOrder.value.split(" ")[1] == StringConstants.asc) {
@@ -1617,7 +1628,7 @@ class _TableViewState extends State<TableView> {
                                     dense: true,
                                     tileColor: Colors.white,
                                     onTap: () {
-                                      selectedCell = null;
+                                      selectedCell.value = null;
                                       updateBody = {};
                                       func(itr.elementAt(index));
                                       tableHeader.value = null;
@@ -1719,7 +1730,6 @@ class _TableViewState extends State<TableView> {
                 setState(() {});
               }),
         ),
-        const VerticalDivider(),
         SizedBox(
           height: 25,
           width: 25,
@@ -1728,46 +1738,26 @@ class _TableViewState extends State<TableView> {
               style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
               padding: EdgeInsets.zero,
               onPressed: lastValue.isEmpty ? null : () {
-                final localFilters = List<Filter>.from(filterModel.filterData);
-
+                final localFilters = List.from(filters.value!);
                 for(var val in localFilters) {
-                  filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                  filters.value!.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
                 }
-                final localFilterPrev = Filter(
-                  key: sortByWithOrder.value.split(" ")[0],
-                  name: "",
-                  filterType: "",
-                  value:  row[row.length-1].row[sortedIndex].value.toString(),
-                );
-                final localFilterNext = Filter(
-                  key: sortByWithOrder.value.split(" ")[0],
-                  name: "",
-                  filterType: "",
-                  value:  lastValue.last,
-                );
                 if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
-                  localFilterPrev.filterType = "Greater Than";
-                  localFilterNext.filterType = "Less or Equals";
-                  filterModel.filterData.add(localFilterPrev);
-                  filterModel.filterData.add(localFilterNext);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[0].row[sortedIndex].value.toString()]);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Less or Equals",lastValue.last]);
 
                 } else {
-                  localFilterPrev.filterType = "Less Than";
-                  localFilterNext.filterType = "Greater or Equals";
-                  filterModel.filterData.add(localFilterPrev);
-                  filterModel.filterData.add(localFilterNext);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[0].row[sortedIndex].value.toString()]);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Greater or Equals",lastValue.last]);
                 }
                 lastValue.remove(lastValue.last);
                 if(lastValue.isEmpty){
                   for(var val in localFilters) {
-                      filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+                    filters.value!.removeWhere((val) => val.first == sortByWithOrder.value.split(" ")[0]);
                   }
                 }
                 dataUpdate(mainContext);
-                // print("object ${filterModel.filterData}");
-                setState(() {
-
-                });
+                setState(() {});
               },
               tooltip: "Previous",
               icon: const Icon(Icons.keyboard_arrow_left)),
@@ -1778,28 +1768,23 @@ class _TableViewState extends State<TableView> {
             width: 25,
             child: IconButton(
               onPressed: () {
-                final localFilters = List<Filter>.from(filterModel.filterData);
+                if(filters.value == null) {
+                  filters.value = [];
+                }
+                final localFilters = List.from(filters.value!);
                 for(var val in localFilters) {
-                  if(val.key == sortByWithOrder.value.split(" ")[0]) {
-                    filterModel.filterData.remove(val);
+                  if(val.first == sortByWithOrder.value.split(" ")[0]) {
+                    filters.value!.remove(val);
                   }
                 }
                 lastValue.add(row[0].row[sortedIndex].value.toString());
                 // print(lastValue);
-                final localFilterSort = Filter(
-                  key: sortByWithOrder.value.split(" ")[0],
-                  name: "",
-                  filterType: "",
-                  value:  row[row.length-1].row[sortedIndex].value.toString(),
-                );
                 if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
-                  localFilterSort.filterType = "Less Than";
-                  filterModel.filterData.add(localFilterSort);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Less Than",row[row.length-1].row[sortedIndex].value.toString()]);
                 } else {
-                  localFilterSort.filterType = "Greater Than";
-                  filterModel.filterData.add(localFilterSort);
+                  filters.value!.add([sortByWithOrder.value.split(" ")[0],"Greater Than",row[row.length-1].row[sortedIndex].value.toString()]);
                 }
-                // print("object ${filterModel.filterData}");
+                // print("object ${filters.value}");
                 dataUpdate(mainContext);
                 setState(() {
 
@@ -1811,6 +1796,98 @@ class _TableViewState extends State<TableView> {
               tooltip: "Next",
               padding: EdgeInsets.zero,
             )),
+        // const VerticalDivider(),
+        // SizedBox(
+        //   height: 25,
+        //   width: 25,
+        //   child: IconButton(
+        //       iconSize: 20,
+        //       style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
+        //       padding: EdgeInsets.zero,
+        //       onPressed: lastValue.isEmpty ? null : () {
+        //         final localFilters = List<Filter>.from(filterModel.filterData);
+        //
+        //         for(var val in localFilters) {
+        //           filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+        //         }
+        //         final localFilterPrev = Filter(
+        //           key: sortByWithOrder.value.split(" ")[0],
+        //           name: sortByWithOrder.value.split(" ")[0],
+        //           filterType: "",
+        //           value:  row[row.length-1].row[sortedIndex].value.toString(),
+        //         );
+        //         final localFilterNext = Filter(
+        //           key: sortByWithOrder.value.split(" ")[0],
+        //           name: sortByWithOrder.value.split(" ")[0],
+        //           filterType: "",
+        //           value:  lastValue.last,
+        //         );
+        //         if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
+        //           localFilterPrev.filterType = "Greater Than";
+        //           localFilterNext.filterType = "Less or Equals";
+        //           filterModel.filterData.add(localFilterPrev);
+        //           filterModel.filterData.add(localFilterNext);
+        //
+        //         } else {
+        //           localFilterPrev.filterType = "Less Than";
+        //           localFilterNext.filterType = "Greater or Equals";
+        //           filterModel.filterData.add(localFilterPrev);
+        //           filterModel.filterData.add(localFilterNext);
+        //         }
+        //         lastValue.remove(lastValue.last);
+        //         if(lastValue.isEmpty){
+        //           for(var val in localFilters) {
+        //               filterModel.filterData.removeWhere((val) => val.key == sortByWithOrder.value.split(" ")[0]);
+        //           }
+        //         }
+        //         dataUpdate(mainContext);
+        //         // print("object ${filterModel.filterData}");
+        //         setState(() {
+        //
+        //         });
+        //       },
+        //       tooltip: "Previous",
+        //       icon: const Icon(Icons.keyboard_arrow_left)),
+        // ),
+        // const VerticalDivider(),
+        // SizedBox(
+        //     height: 25,
+        //     width: 25,
+        //     child: IconButton(
+        //       onPressed: () {
+        //         final localFilters = List<Filter>.from(filterModel.filterData);
+        //         for(var val in localFilters) {
+        //           if(val.key == sortByWithOrder.value.split(" ")[0]) {
+        //             filterModel.filterData.remove(val);
+        //           }
+        //         }
+        //         lastValue.add(row[0].row[sortedIndex].value.toString());
+        //         // print(lastValue);
+        //         final localFilterSort = Filter(
+        //           key: sortByWithOrder.value.split(" ")[0],
+        //           name: sortByWithOrder.value.split(" ")[0],
+        //           filterType: "",
+        //           value:  row[row.length-1].row[sortedIndex].value.toString(),
+        //         );
+        //         if(sortByWithOrder.value.split(" ")[1].toLowerCase() == "desc") {
+        //           localFilterSort.filterType = "Less Than";
+        //           filterModel.filterData.add(localFilterSort);
+        //         } else {
+        //           localFilterSort.filterType = "Greater Than";
+        //           filterModel.filterData.add(localFilterSort);
+        //         }
+        //         // print("object ${filterModel.filterData}");
+        //         dataUpdate(mainContext);
+        //         setState(() {
+        //
+        //         });
+        //       },
+        //       iconSize: 20,
+        //       icon: const Icon(Icons.keyboard_arrow_right),
+        //       style: IconButton.styleFrom(side: const BorderSide(color: Colors.grey)),
+        //       tooltip: "Next",
+        //       padding: EdgeInsets.zero,
+        //     )),
         const SizedBox(
           width: 15,
         ),

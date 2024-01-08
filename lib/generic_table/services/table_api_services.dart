@@ -23,11 +23,14 @@ class ApiServices {
 
   }
 
-  Future<ApiResponseModel> getTableRows({required String baseUrl, List<List<String>>? filters, String? sortBy,required int length}) async {
+  Future<ApiResponseModel> getTableRows({required String baseUrl, List<List<String>>? filters, String? sortBy,required int length,List<List<String>>? pageFilters}) async {
 
     String url = "$baseUrl?";
 
     url += "${filters != null && filters.isNotEmpty ? "filters=${jsonEncode(filters)}" : ""}&limit_page_length=$length&orderBy=${sortBy ?? ""}";
+    if(pageFilters != null) {
+      url += "&page_filters=${jsonEncode(pageFilters)}";
+    }
 
     print(url);
     final res = await GlobalMethods.getRequest(url);
