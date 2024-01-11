@@ -103,7 +103,7 @@ class _RowCellState extends State<RowCell> {
                   }
                   if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
                     widget.body[element.fieldNameInActionApi] = "${abc!.year}-${abc.month}-${abc.day}+${abc.hour}:${abc.minute}:${abc.second}";
-                    _valueNotifier.value = "${abc.year}-${abc.month}-${abc.day} ${abc.hour}:${abc.minute}:${abc.second}";
+                    _valueNotifier.value = "${abc.year}/${abc.month}/${abc.day} ${abc.hour}:${abc.minute}:${abc.second}";
                   }
                 }
                 // print("body ${widget.body}");
