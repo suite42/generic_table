@@ -97,7 +97,7 @@ class FilterCell extends StatelessWidget {
           readOnly: true,
           decoration: filterDecoration(),
           onTap: () async {
-            final abc = await showOmniDateTimePicker(context: context,type: OmniDateTimePickerType.date);
+            final abc = await showOmniDateTimePicker(context: context,type: OmniDateTimePickerType.dateAndTime);
             controller.text = "${abc!.year}-${abc.month}-${abc.day}";
             onSubmit("${abc.year}-${abc.month}-${abc.day}");
           },
