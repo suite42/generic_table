@@ -65,5 +65,8 @@ class GlobalMethods {
     return textPainter.width;
   }
 
+  static String padLeftZero(dynamic value) {
+    return value.toString().padLeft(2,'0');
+  }
 
 }

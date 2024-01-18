@@ -69,6 +69,12 @@ class _RowCellState extends State<RowCell> {
             onPressed: (){launchUrl(Uri.parse(widget.message.rows[widget.index].row[widget.subIndex].href ?? ""));},
           )
       );
+      case "relativepath" : return buildContainer(
+          child: TextButton(
+              child: Text(_valueNotifier.value.isEmpty ? StringConstants.notAvailable : _valueNotifier.value,style: const TextStyle(color: Colors.blue)),
+            onPressed: (){launchUrl(Uri.parse("${Uri.base.origin}${widget.message.rows[widget.index].row[widget.subIndex].href ?? ""}"));},
+          )
+      );
       case "datetime" : return buildContainer(
         child: widget.selectedCell == widget.index && widget.message.rows[widget.index].row[widget.subIndex].writeEnabled
             ? ValueListenableBuilder<String>(
@@ -93,6 +99,7 @@ class _RowCellState extends State<RowCell> {
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 0)),
           onTap: () async {
                 final abc = await showOmniDateTimePicker(context: context);
+                String val = "${abc!.year}-${GlobalMethods.padLeftZero(abc.month)}-${GlobalMethods.padLeftZero(abc.day)} ${GlobalMethods.padLeftZero(abc.hour)}:${GlobalMethods.padLeftZero(abc.minute)}:${GlobalMethods.padLeftZero(abc.second)}";
                 for (var element in widget.message.update!.identifiers) {
                   if(element.mandatory == true) {
                     for(var x in widget.message.rows[widget.index].row) {
@@ -102,8 +109,8 @@ class _RowCellState extends State<RowCell> {
                     }
                   }
                   if(element.fieldNameInTable.toLowerCase() == widget.message.rows[widget.index].row[widget.subIndex].key.toLowerCase()) {
-                    widget.body[element.fieldNameInActionApi] = "${abc!.year}-${abc.month}-${abc.day}+${abc.hour}:${abc.minute}:${abc.second}";
-                    _valueNotifier.value = "${abc.year}/${abc.month}/${abc.day} ${abc.hour}:${abc.minute}:${abc.second}";
+                    widget.body[element.fieldNameInActionApi] = val;
+                    _valueNotifier.value = val;
                   }
                 }
                 // print("body ${widget.body}");
